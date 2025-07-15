@@ -69,7 +69,13 @@ function StatCard({ title, value, colorClass = 'text-gray-900' }: { title: strin
 
 // --- Huvudkomponenten för sidan ---
 
-export default async function MemberDetailPage({ params }: { params: any }) {
+interface MemberDetailPageProps {
+  params: { 
+    id: string 
+  };
+}
+
+export default async function MemberDetailPage({ params }: MemberDetailPageProps) {
   const awaitedParams = await params;
   const { id } = awaitedParams;
   const { member, logs, stats } = await getMemberDetails(id);
