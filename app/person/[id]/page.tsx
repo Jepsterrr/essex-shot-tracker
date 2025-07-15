@@ -76,8 +76,8 @@ interface MemberDetailPageProps {
 }
 
 export default async function MemberDetailPage({ params }: MemberDetailPageProps) {
-  const awaitedParams = await params;
-  const { id } = awaitedParams;
+  const resolvedParams = await (params as any);
+  const { id } = resolvedParams;
   const { member, logs, stats } = await getMemberDetails(id);
 
   if (!member || !stats) {
