@@ -24,3 +24,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Döljer upp/ner-pilarna i WebKit-baserade webbläsare (Chrome, Safari, Edge) */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Döljer upp/ner-pilarna i Firefox */
+.no-spinner {
+  -moz-appearance: textfield;
+}
