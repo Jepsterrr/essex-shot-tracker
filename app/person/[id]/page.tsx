@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import type { ShotLog } from '@/types/types';
-import Link from 'next/link';
 import PaginatedLogTable from './PaginatedLogTable';
 import BackButton from './BackButton';
 

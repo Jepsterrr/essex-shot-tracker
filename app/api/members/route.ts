@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ message: 'Member created' }, { status: 201 });
-  } catch (err) {
+  } catch (_err) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -46,7 +46,7 @@ export async function DELETE(request: Request) {
     }
 
     return NextResponse.json({ message: 'Member deleted' }, { status: 200 });
-  } catch (err) {
+  } catch (_err) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -68,7 +68,7 @@ export async function PATCH(request: Request) {
     }
 
     return new Response(JSON.stringify({ message: 'Member status updated' }), { status: 200 });
-  } catch (err) {
+  } catch (_err) {
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }
@@ -90,7 +90,7 @@ export async function PUT(request: Request) {
     }
 
     return new Response(JSON.stringify({ message: 'Member updated' }), { status: 200 });
-  } catch (err) {
+  } catch (_err) {
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }

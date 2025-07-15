@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
 
 // Samma admin-klient som tidigare
 const supabaseAdmin = createClient(
@@ -19,7 +18,7 @@ export async function POST(request: Request) {
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
     return new Response(JSON.stringify({ message: 'Witness created' }), { status: 201 });
-  } catch (err) {
+  } catch (_err) {
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }
@@ -37,7 +36,7 @@ export async function DELETE(request: Request) {
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
     return new Response(JSON.stringify({ message: 'Witness deleted' }), { status: 200 });
-  } catch (err) {
+  } catch (_err) {
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }
@@ -57,7 +56,7 @@ export async function PUT(request: Request) {
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
     return new Response(JSON.stringify({ message: 'Witness updated' }), { status: 200 });
-  } catch (err) {
+  } catch (_err) {
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
   }
 }
