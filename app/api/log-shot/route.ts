@@ -11,11 +11,11 @@ const supabaseAdmin = createClient(
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { member_id, change, reason, witnesses } = body;
+    const { member_id, change, reason, witnesses, group_type } = body;
 
     // Validering
-    if (!member_id || typeof change !== 'number') {
-      return NextResponse.json({ error: 'member_id and change are required' }, { status: 400 });
+    if (!member_id || typeof change !== 'number' || !group_type) {
+      return NextResponse.json({ error: 'member_id, change, and group_type are required' }, { status: 400 });
     }
 
     // Anropa vår säkra Postgres-funktion
@@ -24,6 +24,7 @@ export async function POST(request: Request) {
       change_amount: change,
       reason_text: reason,
       witnesses_json: witnesses,
+      log_group_type: group_type
     });
 
     if (error) {

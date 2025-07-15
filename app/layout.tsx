@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, EB_Garamond } from "next/font/google";
 import "./globals.css";
-import AuthProvider from "./components/AuthProvider";
 import Header from "./components/Navbar";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
@@ -20,12 +19,10 @@ export default function RootLayout({
   return (
     <html lang="sv">
       <body className={`${inter.variable} ${ebGaramond.variable} font-sans bg-felt-green-dark text-gray-100`}>
-        <AuthProvider>
-          <Header />
-          <main className="container mx-auto p-4 md:p-8">
-            {children}
-          </main>
-        </AuthProvider>
+        <Header />
+        <main className="container mx-auto p-4 md:p-8">
+          {children}
+        </main>
       </body>
     </html>
   );

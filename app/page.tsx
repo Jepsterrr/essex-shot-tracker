@@ -42,7 +42,13 @@ export default function HomePage() {
       return;
     }
 
-    const changeAmount = changeType === 'add' ? amount : -amount;
+    const selectedMember = members.find(m => m.id === selectedMemberId);
+    if (!selectedMember) {
+        setStatus({ message: 'Kunde inte hitta medlemsdata.', type: 'error' });
+        return;
+    }
+
+    const changeAmount = changeType === 'add' ? Number(amount) : -Number(amount);
 
     const finalWitnesses = [...selectedWitnesses];
     if (otherWitnessValue.trim()) {
@@ -56,7 +62,8 @@ export default function HomePage() {
             member_id: selectedMemberId,
             change: changeAmount,
             reason,
-            witnesses: finalWitnesses
+            witnesses: finalWitnesses,
+            group_type: selectedMember.group_type
         })
     });
 

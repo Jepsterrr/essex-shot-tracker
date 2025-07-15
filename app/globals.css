@@ -36,3 +36,34 @@ body {
 .no-spinner {
   -moz-appearance: textfield;
 }
+
+.text-essex-red {
+  color: rgb(185, 28, 28);
+}
+
+.text-essex-gold {
+  color: rgb(212, 175, 55);
+}
+
+.card-white {
+  color: rgb(253, 253, 253);
+}
+
+.felt-green-dark {
+  color: rgb(15, 23, 42);
+}
+
+.card-container {
+  display: block;
+  perspective: 1000px;
+}
+
+.member-card {
+  transition: transform 0.5s ease, box-shadow 0.5s ease;
+  transform-style: preserve-3d;
+}
+
+.card-container:hover .member-card {
+  transform: rotateY(15deg) scale(1.05);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
