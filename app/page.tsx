@@ -94,7 +94,7 @@ export default function HomePage() {
         <div>
           <label htmlFor="member" className="block text-lg font-semibold mb-2 text-gray-800">Vem gäller det?</label>
           <select id="member" value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} required
-            className="w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm">
+            className="form-select w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm">
             <option value="" disabled>Välj en medlem...</option>
             {members.map(m => <option key={m.id} value={m.id}>{m.name} ({m.current_shots} shots)</option>)}
           </select>
@@ -104,15 +104,15 @@ export default function HomePage() {
             <div>
               <label className="block text-lg font-semibold mb-2 text-gray-800">Typ av ändring (+/-)</label>
               <div className="flex items-center space-x-6 mt-3">
-                <label className="flex items-center cursor-pointer"><input type="radio" name="changeType" value="add" checked={changeType === 'add'} onChange={() => setChangeType('add')} className="h-5 w-5 text-green-600 focus:ring-green-500"/><span className="ml-2 text-lg">Lägg till</span></label>
-                <label className="flex items-center cursor-pointer"><input type="radio" name="changeType" value="remove" checked={changeType === 'remove'} onChange={() => setChangeType('remove')} className="h-5 w-5 text-essex-red focus:ring-essex-red"/><span className="ml-2 text-lg">Ta bort</span></label>
+                <label className="flex items-center cursor-pointer"><input type="radio" name="changeType" value="add" checked={changeType === 'add'} onChange={() => setChangeType('add')} className="form-radio h-5 w-5 text-green-600 focus:ring-green-500"/><span className="ml-2 text-lg">Lägg till</span></label>
+                <label className="flex items-center cursor-pointer"><input type="radio" name="changeType" value="remove" checked={changeType === 'remove'} onChange={() => setChangeType('remove')} className="form-radio h-5 w-5 text-essex-red focus:ring-essex-red"/><span className="ml-2 text-lg">Ta bort</span></label>
               </div>
             </div>
             <div>
               <label htmlFor="amount" className="block text-lg font-semibold mb-2 text-gray-800">Antal</label>
               <input type="number" id="amount" value={amount}
                 placeholder="Skriv antal..."
-                className="w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm no-spinner"
+                className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm no-spinner"
                 onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
                 onBlur={() => { if (Number(amount) < 1) setAmount(1); }}
                 min="1" required />
@@ -123,7 +123,15 @@ export default function HomePage() {
           <label className="block text-lg font-semibold mb-2 text-gray-800">Vittnen</label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-4 bg-gray-50 border border-gray-200 rounded-lg">
             {witnesses.map(w => (
-              <label key={w.id} className="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-gray-200"><input type="checkbox" checked={selectedWitnesses.includes(w.name)} onChange={() => handleWitnessChange(w.name)} className="h-4 w-4 text-essex-red rounded border-gray-300 focus:ring-essex-red"/><span className="font-medium">{w.name}</span></label>
+              <label key={w.id} className="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-gray-200">
+                <input
+                  type="checkbox"
+                  checked={selectedWitnesses.includes(w.name)}
+                  onChange={() => handleWitnessChange(w.name)}
+                  className="form-checkbox"
+                />
+                <span className="font-medium">{w.name}</span>
+              </label>
             ))}
           </div>
         </div>
@@ -131,17 +139,17 @@ export default function HomePage() {
         <div>
           <label htmlFor="otherWitness" className="block text-lg font-semibold mb-2 text-gray-800">Annat vittne?</label>
           <input type="text" id="otherWitness" placeholder="Skriv namn på övrigt vittne..." value={otherWitnessValue} onChange={(e) => setOtherWitnessValue(e.target.value)}
-            className="w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm" />
+            className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm" />
         </div>
 
         <div>
           <label htmlFor="reason" className="block text-lg font-semibold mb-2 text-gray-800">Anledning</label>
           <textarea id="reason" value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Skriv anledning här..."
-            className="w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm"></textarea>
+            className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm"></textarea>
         </div>
 
         <div className="pt-4">
-            <button type="submit" className="w-full bg-essex-red text-white font-bold text-xl py-3 rounded-lg bg-green-600 hover:bg-green-800 transition-all duration-300 transform hover:scale-105">
+            <button type="submit" className="w-full text-white font-bold text-xl py-3 rounded-lg bg-green-600 hover:bg-green-800 transition-all duration-300 transform hover:scale-105">
                 ♣ Registrera Händelse ♥
             </button>
         </div>

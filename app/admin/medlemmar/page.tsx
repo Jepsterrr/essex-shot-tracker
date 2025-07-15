@@ -146,11 +146,11 @@ export default function AdminMembersPage() {
             <label htmlFor="newName" className="block text-sm font-medium text-gray-700">Namn & Roll</label>
             <div className="flex flex-col sm:flex-row gap-3">
               <input type="text" id="newName" value={newName} onChange={e => setNewName(e.target.value)}
-                className="flex-grow w-full bg-white border border-gray-400 rounded-md p-2 focus:ring-essex-gold focus:border-essex-gold shadow-sm"
+                className="form-input flex-grow w-full bg-white border border-gray-400 rounded-md p-2 focus:ring-essex-gold focus:border-essex-gold shadow-sm"
                 placeholder="Vittnets namn..." required />
               <div className="flex items-center gap-4 flex-shrink-0 py-2 sm:py-0">
-                <label className="flex items-center"><input type="radio" value="ESS" checked={newMemberGroup === 'ESS'} onChange={() => setNewMemberGroup('ESS')} className="h-4 w-4 text-essex-red focus:ring-essex-red"/> <span className="ml-1 font-semibold">ESS</span></label>
-                <label className="flex items-center"><input type="radio" value="Kex" checked={newMemberGroup === 'Kex'} onChange={() => setNewMemberGroup('Kex')} className="h-4 w-4 text-essex-red focus:ring-essex-red"/> <span className="ml-1 font-semibold">Kex</span></label>
+                <label className="flex items-center"><input type="radio" value="ESS" checked={newMemberGroup === 'ESS'} onChange={() => setNewMemberGroup('ESS')} className="form-radio h-4 w-4 text-essex-red focus:ring-essex-red"/> <span className="ml-1 font-semibold">ESS</span></label>
+                <label className="flex items-center"><input type="radio" value="Kex" checked={newMemberGroup === 'Kex'} onChange={() => setNewMemberGroup('Kex')} className="form-radio h-4 w-4 text-essex-red focus:ring-essex-red"/> <span className="ml-1 font-semibold">Kex</span></label>
               </div>
               <button type="submit" className="flex-shrink-0 bg-green-500 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition-colors">Lägg till</button>
             </div>
@@ -168,10 +168,10 @@ export default function AdminMembersPage() {
                   {editingMemberId === member.id ? (
                     // Redigeringsläge
                     <div className="flex-grow flex flex-col sm:flex-row items-stretch gap-2 w-full">
-                      <input type="text" value={editingName} onChange={(e) => setEditingName(e.target.value)} className="flex-grow bg-white border border-gray-400 rounded-md p-1 w-full"/>
+                      <input type="text" value={editingName} onChange={(e) => setEditingName(e.target.value)} className="form-input flex-grow bg-white border border-gray-400 rounded-md p-1 w-full"/>
                       <div className="flex gap-4 justify-center items-center flex-shrink-0 py-1">
-                        <label className="flex items-center"><input type="radio" value="ESS" checked={editingGroup === 'ESS'} onChange={() => setEditingGroup('ESS')} className="h-4 w-4"/> <span className="ml-1 text-xs">ESS</span></label>
-                        <label className="flex items-center"><input type="radio" value="Kex" checked={editingGroup === 'Kex'} onChange={() => setEditingGroup('Kex')} className="h-4 w-4"/> <span className="ml-1 text-xs">Kex</span></label>
+                        <label className="flex items-center"><input type="radio" value="ESS" checked={editingGroup === 'ESS'} onChange={() => setEditingGroup('ESS')} className="form-radio h-4 w-4"/> <span className="ml-1 text-xs">ESS</span></label>
+                        <label className="flex items-center"><input type="radio" value="Kex" checked={editingGroup === 'Kex'} onChange={() => setEditingGroup('Kex')} className="form-radio h-4 w-4"/> <span className="ml-1 text-xs">Kex</span></label>
                       </div>
                     </div>
                   ) : (

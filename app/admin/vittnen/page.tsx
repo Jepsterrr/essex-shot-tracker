@@ -100,7 +100,7 @@ export default function AdminWitnessesPage() {
             <div className="mt-1 flex flex-col sm:flex-row gap-3">
               <input 
                 type="text" id="newName" value={newName} onChange={e => setNewName(e.target.value)}
-                className="flex-grow w-full bg-white border border-gray-400 rounded-md p-2 focus:ring-essex-gold focus:border-essex-gold shadow-sm"
+                className="form-input flex-grow w-full bg-white border border-gray-400 rounded-md p-2 focus:ring-essex-gold focus:border-essex-gold shadow-sm"
                 placeholder="Vittnets namn..." required 
               />
               <button type="submit" className="w-full sm:w-auto flex-shrink-0 bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition-colors">
@@ -122,7 +122,7 @@ export default function AdminWitnessesPage() {
                     {editingWitnessId === witness.id ? (
                       <input 
                         type="text" value={editingName} onChange={(e) => setEditingName(e.target.value)}
-                        className="w-full bg-white border border-gray-400 rounded-md p-1" autoFocus />
+                        className="form-input w-full bg-white border border-gray-400 rounded-md p-1" autoFocus />
                     ) : (
                       <span className="p-1 font-medium">{witness.name}</span>
                     )}
