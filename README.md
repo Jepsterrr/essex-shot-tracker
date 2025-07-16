@@ -46,7 +46,7 @@ För att köra projektet lokalt, följ dessa steg:
   # eller
   pnpm install
   ``` 
-4. Sätt upp miljövariabler
+3. Sätt upp miljövariabler
 
 Skapa en fil vid namn .env.local i roten av projektet och lägg till dina Supabase-nycklar. Dessa hittar du i ditt Supabase-projekts inställningar under "API".
 ```bash
@@ -55,8 +55,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=din-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=din-supabase-service-role-key
 ```
 SUPABASE_SERVICE_ROLE_KEY behövs för att hantera data säkert från serversidan via API-anropen.
-6. Kör utvecklingsservern
 
+4. 
 ```bash
 npm run dev
 # eller
