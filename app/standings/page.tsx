@@ -14,7 +14,7 @@ function MemberCard({ member, index }: { member: Member, index: number }) {
     if (r > 1 && r < 11) return r.toString();
     const faceCards = { 11: 'J', 12: 'Q', 13: 'K' };
     if (r > 13) r = r % 13;
-    // @ts-ignore
+    // @ts-expect-error
     return faceCards[r] || r.toString();
   }
   const cardValue = getCardValue(rank)
