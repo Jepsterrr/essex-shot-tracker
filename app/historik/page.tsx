@@ -29,7 +29,7 @@ async function getHistory(currentPage: number) {
   return { history: data as unknown as ShotLog[], totalCount: count || 0 };
 }
 
-export default async function HistoryPage({ searchParams }: { searchParams: { page?: string } }) {
+export default async function HistoryPage({ searchParams }: { searchParams: any }) {
   const currentPage = Number(searchParams.page) || 1;
   const { history, totalCount } = await getHistory(currentPage);
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
