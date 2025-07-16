@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, useRef } from 'react';
 import { supabase } from '@/lib/supabase-client';
 import type { Member } from '@/types/types';
 import type { Witness } from '@/types/types';
@@ -15,6 +15,8 @@ export default function HomePage() {
   const [selectedWitnesses, setSelectedWitnesses] = useState<string[]>([]);
   const [status, setStatus] = useState<{ message: string; type: 'success' | 'error' | '' }>({ message: '', type: '' });
   const [otherWitnessValue, setOtherWitnessValue] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -32,6 +34,17 @@ export default function HomePage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -84,35 +97,72 @@ export default function HomePage() {
     );
   };
 
+  const selectedMemberName = members.find(m => m.id === selectedMemberId)?.name || "Välj en medlem...";
 
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-5xl font-serif font-bold text-center mb-8 text-essex-gold drop-shadow-lg">Shot-Protokoll</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6 bg-card-white text-gray-800 p-8 rounded-xl shadow-2xl border border-gray-200/10">
+      <form onSubmit={handleSubmit} className="space-y-6 bg-card-white text-gray-200 p-8 rounded-xl shadow-2xl border border-gray-200/10">
         
         <div>
-          <label htmlFor="member" className="block text-lg font-semibold mb-2 text-gray-800">Vem gäller det?</label>
-          <select id="member" value={selectedMemberId} onChange={(e) => setSelectedMemberId(e.target.value)} required
-            className="form-select w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm">
-            <option value="" disabled>Välj en medlem...</option>
-            {members.map(m => <option key={m.id} value={m.id}>{m.name} ({m.current_shots} shots)</option>)}
-          </select>
+          <label htmlFor="member" className="block text-lg font-semibold mb-2 text-gray-200">Vem gäller det?</label>
+
+          <div className="relative" ref={dropdownRef}>
+            <div
+              className={`
+                form-select
+                w-full rounded-md border-2 transition-all duration-200
+                ${isDropdownOpen 
+                  ? 'border-amber-300/70 shadow-lg' 
+                  : 'border-gray-400 hover:border-gray-500'
+                }
+              `}
+            >
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full p-3 text-lg text-left grid grid-cols-[1fr_auto] items-center gap-4"
+              >
+                <span className="truncate">{selectedMemberName}</span>
+                <span className="flex items-center">
+                  <svg className={`w-6 h-6 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'transform rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                </span>
+                </button>
+              
+              {isDropdownOpen && (
+                <ul className="w-full bg-gray-700 overflow-auto border-t-2 border-amber-300/70">
+                  {members.map(member => (
+                    <li
+                      key={member.id}
+                      onClick={() => {
+                        setSelectedMemberId(member.id);
+                        setIsDropdownOpen(false);
+                      }}
+                      className="p-3 text-white text-lg cursor-pointer hover:bg-gray-500"
+                    >
+                      {member.name} 
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
-              <label className="block text-lg font-semibold mb-2 text-gray-800">Typ av ändring (+/-)</label>
+              <label className="block text-lg font-semibold mb-2 text-gray-200">Typ av ändring (+/-)</label>
               <div className="flex items-center space-x-6 mt-3">
-                <label className="flex items-center cursor-pointer"><input type="radio" name="changeType" value="add" checked={changeType === 'add'} onChange={() => setChangeType('add')} className="form-radio h-5 w-5 text-green-600 focus:ring-green-500"/><span className="ml-2 text-lg">Lägg till</span></label>
-                <label className="flex items-center cursor-pointer"><input type="radio" name="changeType" value="remove" checked={changeType === 'remove'} onChange={() => setChangeType('remove')} className="form-radio h-5 w-5 text-essex-red focus:ring-essex-red"/><span className="ml-2 text-lg">Ta bort</span></label>
+                <label className="flex items-center cursor-pointer"><input type="radio" name="changeType" value="add" checked={changeType === 'add'} onChange={() => setChangeType('add')} className="form-radio value-add h-5 w-5"/><span className="ml-2 text-lg">Lägg till</span></label>
+                <label className="flex items-center cursor-pointer"><input type="radio" name="changeType" value="remove" checked={changeType === 'remove'} onChange={() => setChangeType('remove')} className="form-radio value-remove h-5 w-5"/><span className="ml-2 text-lg">Ta bort</span></label>
               </div>
             </div>
             <div>
-              <label htmlFor="amount" className="block text-lg font-semibold mb-2 text-gray-800">Antal</label>
+              <label htmlFor="amount" className="block text-lg font-semibold mb-2 text-gray-200">Antal</label>
               <input type="number" id="amount" value={amount}
                 placeholder="Skriv antal..."
-                className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm no-spinner"
+                className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg shadow-sm no-spinner"
                 onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
                 onBlur={() => { if (Number(amount) < 1) setAmount(1); }}
                 min="1" required />
@@ -120,10 +170,10 @@ export default function HomePage() {
         </div>
 
         <div>
-          <label className="block text-lg font-semibold mb-2 text-gray-800">Vittnen</label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <label className="block text-lg font-semibold mb-2 text-gray-200">Vittnen</label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-4 bg-gray-600/40 border border-gray-200 rounded-lg">
             {witnesses.map(w => (
-              <label key={w.id} className="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-gray-200">
+              <label key={w.id} className="flex items-center space-x-2 cursor-pointer text-white p-2 rounded hover:bg-gray-600">
                 <input
                   type="checkbox"
                   checked={selectedWitnesses.includes(w.name)}
@@ -137,19 +187,22 @@ export default function HomePage() {
         </div>
 
         <div>
-          <label htmlFor="otherWitness" className="block text-lg font-semibold mb-2 text-gray-800">Annat vittne?</label>
+          <label htmlFor="otherWitness" className="block text-lg font-semibold mb-2 text-gray-300">Annat vittne?</label>
           <input type="text" id="otherWitness" placeholder="Skriv namn på övrigt vittne..." value={otherWitnessValue} onChange={(e) => setOtherWitnessValue(e.target.value)}
-            className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm" />
+            className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg shadow-sm" />
         </div>
 
         <div>
-          <label htmlFor="reason" className="block text-lg font-semibold mb-2 text-gray-800">Anledning</label>
+          <label htmlFor="reason" className="block text-lg font-semibold mb-2 text-gray-300">Anledning</label>
           <textarea id="reason" value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="Skriv anledning här..."
-            className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg focus:ring-essex-gold focus:border-essex-gold shadow-sm"></textarea>
+            className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg shadow-sm"></textarea>
         </div>
 
         <div className="pt-4">
-            <button type="submit" className="w-full text-white font-bold text-xl py-3 rounded-lg bg-green-600 hover:bg-green-800 transition-all duration-300 transform hover:scale-105">
+            <button 
+              type="submit" 
+              className="w-full text-white font-serif tracking-wider font-bold text-xl py-3 rounded-lg bg-essex-red hover:border-7 transition-all duration-300 transform hover:scale-105 border-b-3 border-t-3 border-red-900 active:border-b-2 active:scale-100"
+            >
                 ♣ Registrera Händelse ♥
             </button>
         </div>

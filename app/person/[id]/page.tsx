@@ -58,10 +58,10 @@ async function getMemberDetails(id: string) {
 
 // --- Komponenter för att visa statistik ---
 
-function StatCard({ title, value, colorClass = 'text-gray-900' }: { title: string; value: string | number; colorClass?: string }) {
+function StatCard({ title, value, colorClass = 'text-gray-200' }: { title: string; value: string | number; colorClass?: string }) {
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-      <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{title}</p>
+    <div className="bg-gray-700/60 border border-gray-200 rounded-lg p-4 text-center">
+      <p className="text-sm font-medium text-gray-300 uppercase tracking-wider">{title}</p>
       <p className={`text-4xl font-bold mt-1 ${colorClass}`}>{value}</p>
     </div>
   );
@@ -76,8 +76,8 @@ export default async function MemberDetailPage({ params }: { params: any }) {
   if (!member || !stats) {
     return (
       <div className="text-center py-20">
-        <h1 className="text-2xl font-bold text-essex-red">Medlem hittades inte</h1>
-        <p className="text-gray-400">Kunde inte hitta någon medlem med detta ID.</p>
+        <h1 className="text-2xl font-bold text-red-500">Medlem hittades inte</h1>
+        <p className="text-gray-200">Kunde inte hitta någon medlem med detta ID.</p>
         <div className="mt-8">
             <BackButton text="Tillbaka till Skuldligan" />
         </div>
@@ -88,7 +88,7 @@ export default async function MemberDetailPage({ params }: { params: any }) {
   return (
     <div>
       {/* --- Header-sektion med namn --- */}
-      <div className="text-center mb-10 border-b-2 border-essex-gold pb-6">
+      <div className="text-center mb-10 border-b-2 border-amber-400/50 pb-6">
         <h1 className="text-6xl font-serif font-bold text-essex-gold drop-shadow-lg">{member.name}</h1>
         <p className="text-2xl text-gray-300 mt-2">Statistiköversikt</p>
         <div className="w-full/50 mt-4">
@@ -98,7 +98,7 @@ export default async function MemberDetailPage({ params }: { params: any }) {
 
       {/* --- Övergripande Statistik --- */}
       <section className="mb-12">
-        <h2 className="text-2xl font-serif text-center font-semibold mb-4 text-gray-800">Övergripande</h2>
+        <h2 className="text-2xl font-serif text-center font-semibold mb-4 text-gray-200">Övergripande</h2>
         <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6">
             <StatCard title="Nuvarande skuld" value={member.current_shots} colorClass="text-essex-red" />
             <StatCard title="Största enskilda straff" value={stats.biggestSingleAddition} />
@@ -108,7 +108,7 @@ export default async function MemberDetailPage({ params }: { params: any }) {
 
       {/* --- Shots Tilldelade (Kex vs ESS) --- */}
       <section className="mb-12">
-          <h2 className="text-2xl font-serif text-center font-semibold mb-4 text-gray-800">Shots Tilldelade</h2>
+          <h2 className="text-2xl font-serif text-center font-semibold mb-4 text-gray-200">Shots Tilldelade</h2>
           <div className="max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
               <StatCard title="Som KEX" value={stats.givenAsKex} colorClass="text-red-500" />
               <StatCard title="Som ESS" value={stats.givenAsEss} colorClass="text-red-500" />
@@ -117,7 +117,7 @@ export default async function MemberDetailPage({ params }: { params: any }) {
 
       {/* --- Avklarade Shots (Kex vs ESS) --- */}
       <section>
-          <h2 className="text-2xl font-serif text-center font-semibold mb-4 text-gray-800">Avklarade Shots</h2>
+          <h2 className="text-2xl font-serif text-center font-semibold mb-4 text-gray-200">Avklarade Shots</h2>
           <div className="max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
               <StatCard title="Som KEX" value={stats.removedAsKex} colorClass="text-green-600" />
               <StatCard title="Som ESS" value={stats.removedAsEss} colorClass="text-green-600" />
@@ -126,7 +126,7 @@ export default async function MemberDetailPage({ params }: { params: any }) {
 
       {/* --- Detaljerad händelselogg för medlemmen (nu responsiv) --- */}
       <div className="mt-16 bg-card-white text-gray-800 rounded-xl shadow-lg p-4 md:p-6">
-        <h2 className="text-2xl font-bold mb-4 text-gray-900">Personlig Händelselogg</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-200">Personlig Händelselogg</h2>
         <PaginatedLogTable logs={logs} />
       </div>
     </div>
