@@ -19,6 +19,7 @@ Detta är en webbapplikation byggd med Next.js och Supabase för att hålla koll
 
   Hantera vittnen (lägg till, redigera, radera).
 
+
 ## Teknisk Översikt
 - Framework: Next.js
 
@@ -27,6 +28,7 @@ Detta är en webbapplikation byggd med Next.js och Supabase för att hålla koll
 - Backend & Databas: Supabase
 
 - Språk: TypeScript
+
 
 ## Komma igång
 För att köra projektet lokalt, följ dessa steg:
@@ -45,19 +47,22 @@ För att köra projektet lokalt, följ dessa steg:
   pnpm install
   ``` 
 4. Sätt upp miljövariabler
-   Skapa en fil vid namn .env.local i roten av projektet och lägg till dina Supabase-nycklar. Dessa hittar du i ditt Supabase-projekts inställningar under "API".
-   ```bash
-   NEXT_PUBLIC_SUPABASE_URL=din-supabase-url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=din-supabase-anon-key
-   SUPABASE_SERVICE_ROLE_KEY=din-supabase-service-role-key
-   ```
-   SUPABASE_SERVICE_ROLE_KEY behövs för att hantera data säkert från serversidan via API-anropen.
+
+Skapa en fil vid namn .env.local i roten av projektet och lägg till dina Supabase-nycklar. Dessa hittar du i ditt Supabase-projekts inställningar under "API".
+```bash
+NEXT_PUBLIC_SUPABASE_URL=din-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=din-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=din-supabase-service-role-key
+```
+SUPABASE_SERVICE_ROLE_KEY behövs för att hantera data säkert från serversidan via API-anropen.
 6. Kör utvecklingsservern
-   ```bash
-   npm run dev
-   # eller
-   yarn dev
-   # eller
-   pnpm dev
-   ```
-   Öppna [http://localhost:3000](http://localhost:3000) i din webbläsare för att se resultatet.
+
+```bash
+npm run dev
+# eller
+yarn dev
+# eller
+pnpm dev
+```
+
+Öppna [http://localhost:3000](http://localhost:3000) i din webbläsare för att se resultatet.
