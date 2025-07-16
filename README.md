@@ -14,6 +14,7 @@ Detta är en webbapplikation byggd med Next.js och Supabase för att hålla koll
 - Personlig statistik: Varje medlem har en egen sida med detaljerad statistik över utdelade och avklarade shots.
 
 - Adminpanel:
+
   Hantera medlemmar (lägg till, redigera, arkivera, radera).
 
   Hantera vittnen (lägg till, redigera, radera).
