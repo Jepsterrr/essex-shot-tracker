@@ -56,7 +56,7 @@ SUPABASE_SERVICE_ROLE_KEY=din-supabase-service-role-key
 ```
 SUPABASE_SERVICE_ROLE_KEY behövs för att hantera data säkert från serversidan via API-anropen.
 
-4. 
+4. Kör utvecklingsservern
 ```bash
 npm run dev
 # eller
