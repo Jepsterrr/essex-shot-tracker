@@ -6,16 +6,22 @@ import type { Member } from '@/types/types';
 function MemberCard({ member, index }: { member: Member, index: number }) {
   const rank = index + 1;
   const suits = ['♥', '♠', '♦', '♣'];
-  const suit = suits[rank % suits.length];
+  const suit = suits[(rank - 1) % suits.length]; 
   const colorClass = suit === '♥' || suit === '♦' ? 'text-red-500' : 'text-gray-200';
 
-  const getCardValue = (r: number) => {
-    if (r === 1) return 'A';
-    if (r > 1 && r < 11) return r.toString();
-    const faceCards = { 11: 'J', 12: 'Q', 13: 'K' };
-    if (r > 13) r = r % 13;
-    // @ts-expect-error
-    return faceCards[r] || r.toString();
+  const getCardValue = (r: number): string => {
+    const effectiveRank = ((r - 1) % 13) + 1;
+
+    if (effectiveRank === 1) return 'A';
+    if (effectiveRank >= 2 && effectiveRank <= 10) return effectiveRank.toString();
+
+    const faceCards: Record<number, string> = {
+      11: 'J',
+      12: 'Q',
+      13: 'K'
+    };
+    
+    return faceCards[effectiveRank];
   }
   const cardValue = getCardValue(rank)
 
