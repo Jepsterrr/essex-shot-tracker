@@ -70,7 +70,7 @@ export default function PaginatedLogTable({ logs }: PaginatedLogTableProps) {
           >
             Föregående
           </button>
-          <span className="text-sm font-semibold">
+          <span className="text-sm font-semibold text-gray-200">
             Sida {currentPage} av {totalPages}
           </span>
           <button

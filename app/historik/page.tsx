@@ -94,7 +94,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: any 
                             className={`bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded hover:bg-gray-300 ${currentPage <= 1 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
                             Föregående
                         </Link>
-                        <span className="text-sm font-semibold">
+                        <span className="text-sm font-semibold text-gray-200">
                             Sida {currentPage} av {totalPages}
                         </span>
                         <Link href={`/historik?page=${currentPage + 1}`}
