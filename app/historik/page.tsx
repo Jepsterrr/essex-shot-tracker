@@ -2,6 +2,8 @@ import { supabase } from '@/lib/supabase-client';
 import type { ShotLog } from '@/types/types';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 const ITEMS_PER_PAGE = 25;
 
 async function getHistory(currentPage: number) {
@@ -78,7 +80,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: any 
                                     <td className="flex justify-between items-center p-3 lg:table-cell lg:py-4 lg:pl-3 lg:pr-4 lg:whitespace-nowrap lg:text-right sm:pr-6">
                                       <span className="font-bold lg:hidden mr-2">Datum</span>
                                       <span className="text-sm">
-                                        {new Date(log.created_at).toLocaleString('sv-SE', { hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit' })}
+                                        {new Date(log.created_at).toLocaleString('sv-SE', { hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Europe/Stockholm' })}
                                       </span>
                                     </td>
                                 </tr>

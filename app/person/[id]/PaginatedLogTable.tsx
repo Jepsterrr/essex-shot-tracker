@@ -39,7 +39,7 @@ export default function PaginatedLogTable({ logs }: PaginatedLogTableProps) {
                 <td className="flex justify-between items-center p-3 lg:table-cell lg:py-4 lg:pl-4 lg:pr-3 lg:whitespace-nowrap sm:pl-6">
                   <span className="font-bold lg:hidden mr-2">Datum</span>
                   <span className="text-sm text-right lg:text-left ml-2">
-                    {new Date(log.created_at).toLocaleString('sv-SE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {new Date(log.created_at).toLocaleString('sv-SE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Stockholm'})}
                   </span>
                 </td>
                 <td className={`flex justify-between items-center p-3 lg:table-cell lg:px-3 lg:py-4 lg:whitespace-nowrap lg:text-center font-bold ${log.change > 0 ? 'text-red-600' : 'text-green-600'}`}>
