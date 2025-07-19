@@ -2,6 +2,8 @@ import { supabase } from '@/lib/supabase-client';
 import Link from 'next/link';
 import type { Member } from '@/types/types';
 
+export const dynamic = 'force-dynamic';
+
 // Kort-komponenten
 function MemberCard({ member, index }: { member: Member, index: number }) {
   const rank = index + 1;
@@ -96,7 +98,7 @@ export default async function StandingsPage() {
           {/* --- SEKTION FÖR KEX --- */}
           {kexMembers.length > 0 && (
             <section className="mb-16">
-              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-amber-400 pb-2">KEX</h2>
+              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-amber-400 pb-2 mt-6">KEX</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {kexMembers.map((member, index) => (
                   <MemberCard key={member.id} member={member} index={index} />
@@ -108,7 +110,7 @@ export default async function StandingsPage() {
           {/* --- SEKTION FÖR ESS --- */}
           {essMembers.length > 0 && (
             <section>
-              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-red-400 pb-2">ESS</h2>
+              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-red-400 pb-2 mt-6">ESS</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {essMembers.map((member, index) => (
                   <MemberCard key={member.id} member={member} index={index} />
@@ -119,7 +121,7 @@ export default async function StandingsPage() {
 
           {jokerMembers.length > 0 && (
             <section>
-              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-purple-400 pb-2">Joker</h2>
+              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-purple-400 pb-2 mt-6">JOKER</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {jokerMembers.map((member, index) => (
                   <MemberCard key={member.id} member={member} index={index} />
