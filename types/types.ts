@@ -2,8 +2,13 @@ export interface Member {
   id: string;
   name: string;
   current_shots: number;
-  group_type: string;
+  group_type: 'Kex' | 'ESS' | 'Joker';
   created_at: string;
+}
+
+export interface MemberWithStats extends Member {
+  totalGiven: number;
+  totalRemoved: number;
 }
 
 export interface ShotLog {

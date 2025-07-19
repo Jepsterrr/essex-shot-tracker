@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="sv">
-      <body className={`${inter.variable} ${ebGaramond.variable} font-sans bg-felt-green-dark text-gray-100`}>
+      <body className={`${inter.variable} ${ebGaramond.variable} font-sans text-gray-100`}>
         <Header />
         <main className="container mx-auto p-4 md:p-8">
           {children}

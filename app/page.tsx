@@ -7,7 +7,7 @@ import type { Witness } from '@/types/types';
 
 export default function HomePage() {
   const [members, setMembers] = useState<Member[]>([]);
-  const [witnesses, setWitnesses] = useState<Witness[]>([]);
+  const [allWitnessOptions, setAllWitnessOptions] = useState<Witness[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
   const [changeType, setChangeType] = useState<'add' | 'remove'>('add');
   const [amount, setAmount] = useState<number | ''>(1);
@@ -28,8 +28,20 @@ export default function HomePage() {
         .order('name');
       if (memberData) setMembers(memberData);
 
+      // Hämta manuellt tillagda vittnen från 'witnesses'-tabellen
       const { data: witnessData } = await supabase.from('witnesses').select('*').order('name');
-      if (witnessData) setWitnesses(witnessData);
+
+      const memberWitnesses: Witness[] = (memberData || [])
+        .filter(m => m.group_type === 'ESS' || m.group_type === 'Joker')
+        .map(m => ({ id: m.id, name: m.name }));
+      
+      // Slå ihop de manuella vittnena med de kvalificerade medlemmarna
+      const combined = [...(witnessData || []), ...memberWitnesses];
+      
+      // Ta bort eventuella dubbletter om en medlem också finns i den manuella listan
+      const uniqueWitnesses = Array.from(new Map(combined.map(item => [item.name, item])).values());
+
+      setAllWitnessOptions(uniqueWitnesses.sort((a, b) => a.name.localeCompare(b.name)));
     }
     fetchData();
   }, []);
@@ -172,7 +184,7 @@ export default function HomePage() {
         <div>
           <label className="block text-lg font-semibold mb-2 text-gray-200">Vittnen</label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-4 bg-gray-600/40 border border-gray-200 rounded-lg">
-            {witnesses.map(w => (
+            {allWitnessOptions.map(w => (
               <label key={w.id} className="flex items-center space-x-2 cursor-pointer text-white p-2 rounded hover:bg-gray-600">
                 <input
                   type="checkbox"

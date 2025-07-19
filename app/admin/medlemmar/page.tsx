@@ -12,13 +12,13 @@ export default function AdminMembersPage() {
   
   // State för formulär och statusmeddelanden
   const [newName, setNewName] = useState('');
-  const [newMemberGroup, setNewMemberGroup] = useState<'ESS' | 'Kex'>('ESS');
+  const [newMemberGroup, setNewMemberGroup] = useState<'ESS' | 'Kex' | 'Joker'>('ESS');
   const [status, setStatus] = useState('');
   
   // State för redigeringsläget
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
-  const [editingGroup, setEditingGroup] = useState<'ESS' | 'Kex'>('ESS');
+  const [editingGroup, setEditingGroup] = useState<'ESS' | 'Kex' | 'Joker'>('ESS');
 
   const router = useRouter();
 
@@ -110,7 +110,7 @@ export default function AdminMembersPage() {
   const handleEditClick = (member: Member) => {
     setEditingMemberId(member.id);
     setEditingName(member.name);
-    setEditingGroup(member.group_type as 'ESS' | 'Kex');
+    setEditingGroup(member.group_type as 'ESS' | 'Kex' | 'Joker');
   };
 
   const handleCancelClick = () => setEditingMemberId(null);
@@ -151,6 +151,7 @@ export default function AdminMembersPage() {
               <div className="flex items-center gap-4 flex-shrink-0 py-2 sm:py-0">
                 <label className="flex items-center"><input type="radio" value="ESS" checked={newMemberGroup === 'ESS'} onChange={() => setNewMemberGroup('ESS')} className="form-radio h-4 w-4"/> <span className="ml-1 font-semibold text-gray-100">ESS</span></label>
                 <label className="flex items-center"><input type="radio" value="Kex" checked={newMemberGroup === 'Kex'} onChange={() => setNewMemberGroup('Kex')} className="form-radio h-4 w-4"/> <span className="ml-1 font-semibold text-gray-100">Kex</span></label>
+                <label className="flex items-center"><input type="radio" value="Joker" checked={newMemberGroup === 'Joker'} onChange={() => setNewMemberGroup('Joker')} className="form-radio h-4 w-4"/> <span className="ml-1 font-semibold text-gray-100">Joker</span></label>
               </div>
               <button type="submit" className="flex-shrink-0 bg-green-500 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition-colors">Lägg till</button>
             </div>
@@ -172,13 +173,18 @@ export default function AdminMembersPage() {
                       <div className="flex gap-4 justify-center items-center flex-shrink-0 py-1">
                         <label className="flex items-center"><input type="radio" value="ESS" checked={editingGroup === 'ESS'} onChange={() => setEditingGroup('ESS')} className="form-radio h-4 w-4"/> <span className="ml-1 text-xs text-gray-100">ESS</span></label>
                         <label className="flex items-center"><input type="radio" value="Kex" checked={editingGroup === 'Kex'} onChange={() => setEditingGroup('Kex')} className="form-radio h-4 w-4"/> <span className="ml-1 text-xs text-gray-100">Kex</span></label>
+                        <label className="flex items-center"><input type="radio" value="Joker" checked={editingGroup === 'Joker'} onChange={() => setEditingGroup('Joker')} className="form-radio h-4 w-4"/> <span className="ml-1 text-xs text-gray-100">Joker</span></label>
                       </div>
                     </div>
                   ) : (
                     // Visningsläge
                     <div className="flex-grow flex items-center mb-2 sm:mb-0">
                       <span className="p-1 font-medium text-gray-100">{member.name}</span>
-                      <span className={`text-xs font-bold ml-2 px-2 py-0.5 rounded-full ${member.group_type === 'Kex' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}`}>{member.group_type}</span>
+                      <span className={`text-xs font-bold ml-2 px-2 py-0.5 rounded-full ${
+                        member.group_type === 'Kex' ? 'bg-blue-100 text-blue-800' : 
+                        member.group_type == 'Joker' ? 'bg-purple-100 text-purple-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>{member.group_type}</span>
                     </div>
                   )}
                   <div className="flex items-center justify-end space-x-2 flex-shrink-0">

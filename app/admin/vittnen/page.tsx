@@ -89,12 +89,12 @@ export default function AdminWitnessesPage() {
   return (
     <div className="max-w-4xl mx-auto bg-card-white text-gray-800 rounded-xl shadow-2xl border border-gray-300">
       <div className="p-4 md:p-8">
-        <h1 className="text-3xl md:text-5xl font-serif font-bold text-gray-200 mb-2">Hantera Vittnen</h1>
-        <p className="text-gray-300 mb-6 md:mb-8">Lägg till, redigera eller ta bort personer i vittneslistan.</p>
+        <h1 className="text-3xl md:text-5xl font-serif font-bold text-gray-200 mb-2">Hantera Externa Vittnen</h1>
+        <p className="text-gray-300 mb-6 md:mb-8">Lägg till, redigera eller ta bort personer i externa vittneslistan.</p>
         
         {/* Sektion för att lägga till nytt vittne */}
         <div className="border-t border-gray-200 pt-6">
-          <h2 className="text-lg md:text-xl font-bold mb-3 text-gray-300">Lägg till nytt vittne</h2>
+          <h2 className="text-lg md:text-xl font-bold mb-3 text-gray-300">Lägg till nytt externt vittne</h2>
           <form onSubmit={handleAddWitness}>
             <label htmlFor="newName" className="block text-sm font-medium text-gray-300 sr-only">Namn</label>
             <div className="mt-1 flex flex-col sm:flex-row gap-3">
@@ -112,7 +112,7 @@ export default function AdminWitnessesPage() {
 
         {/* Sektion för nuvarande vittnen */}
         <div className="mt-10">
-          <h2 className="text-lg md:text-xl font-bold mb-3 text-gray-200">Nuvarande vittnen</h2>
+          <h2 className="text-lg md:text-xl font-bold mb-3 text-gray-200">Nuvarande externa vittnen</h2>
           {status && <p className="mb-4 text-center text-sm p-3 border border-amber-300/50 bg-gray-600/50 text-gray-200 rounded-md">{status}</p>}
           <div className="border border-gray-200 rounded-lg overflow-hidden">
             <ul className="divide-y divide-gray-200">

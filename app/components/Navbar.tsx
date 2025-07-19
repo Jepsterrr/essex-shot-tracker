@@ -21,7 +21,7 @@ export default function Header() {
           <Link href="/historik" className="font-semibold hover:text-yellow-300 transition-colors">Historik</Link>
           <div className="flex items-center gap-4 pl-4 border-l-2 border-gray-500">
             <Link href="/admin/medlemmar" className="text-sm hover:text-yellow-300">Admin: Medlemmar</Link>
-            <Link href="/admin/vittnen" className="text-sm hover:text-yellow-300">Admin: Vittnen</Link>
+            <Link href="/admin/vittnen" className="text-sm hover:text-yellow-300">Admin: Externa Vittnen</Link>
           </div>
         </div>
         

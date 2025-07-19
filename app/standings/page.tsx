@@ -60,7 +60,7 @@ function MemberCard({ member, index }: { member: Member, index: number }) {
   );
 }
 
-async function getStandings() {
+async function getStandings(): Promise<Member[]> {
   const { data, error } = await supabase
     .from('members')
     .select('*')
@@ -80,6 +80,7 @@ export default async function StandingsPage() {
   
   const kexMembers = members.filter(m => m.group_type === 'Kex');
   const essMembers = members.filter(m => m.group_type === 'ESS');
+  const jokerMembers = members.filter(m => m.group_type === 'Joker');
 
   return (
     <div>
@@ -95,7 +96,7 @@ export default async function StandingsPage() {
           {/* --- SEKTION FÖR KEX --- */}
           {kexMembers.length > 0 && (
             <section className="mb-16">
-              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-essex-gold pb-2">KEX</h2>
+              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-amber-400 pb-2">KEX</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {kexMembers.map((member, index) => (
                   <MemberCard key={member.id} member={member} index={index} />
@@ -107,7 +108,18 @@ export default async function StandingsPage() {
           {/* --- SEKTION FÖR ESS --- */}
           {essMembers.length > 0 && (
             <section>
-              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-essex-gold pb-2">ESS</h2>
+              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-red-400 pb-2">ESS</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {essMembers.map((member, index) => (
+                  <MemberCard key={member.id} member={member} index={index} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {jokerMembers.length > 0 && (
+            <section>
+              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-purple-400 pb-2">ESS</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {essMembers.map((member, index) => (
                   <MemberCard key={member.id} member={member} index={index} />
