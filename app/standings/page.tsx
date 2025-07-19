@@ -119,9 +119,9 @@ export default async function StandingsPage() {
 
           {jokerMembers.length > 0 && (
             <section>
-              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-purple-400 pb-2">ESS</h2>
+              <h2 className="text-4xl font-serif font-semibold text-center mb-6 text-gray-300 border-b-2 border-purple-400 pb-2">Joker</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {essMembers.map((member, index) => (
+                {jokerMembers.map((member, index) => (
                   <MemberCard key={member.id} member={member} index={index} />
                 ))}
               </div>
