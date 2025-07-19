@@ -1,5 +1,3 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
 ## Essex Shot Tracker
 
 Detta är en webbapplikation byggd med Next.js och Supabase för att hålla koll på straffshots inom en grupp. Applikationen tillåter användare att logga utdelade och konsumerade shots, se en aktuell ställning, och granska detaljerad historik.
