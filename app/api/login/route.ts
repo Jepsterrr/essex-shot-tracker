@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/session';
+import { NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
+import bcrypt from "bcrypt";
 
 export async function POST(request: Request) {
   try {
@@ -7,26 +8,37 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { password } = body;
 
-    const sitePassword = process.env.SITE_PASSWORD;
+    const sitePasswordHash = process.env.SITE_PASSWORD_HASH;
 
-    if (!sitePassword) {
-      console.error('Miljövariabeln SITE_PASSWORD är inte satt.');
-      return NextResponse.json({ error: 'Serverkonfigurationsfel' }, { status: 500 });
+    console.log("Inskickat lösenord:", password);
+    console.log("Hash från .env-fil:", sitePasswordHash);
+
+    if (!sitePasswordHash) {
+      console.error("Miljövariabeln SITE_PASSWORD_HASH är inte satt.");
+      return NextResponse.json(
+        { error: "Serverkonfigurationsfel" },
+        { status: 500 }
+      );
     }
 
-    if (password === sitePassword) {
+    const match = await bcrypt.compare(password, sitePasswordHash);
+    console.log("Matchar lösenordet?", match);
+
+    if (match) {
       // Sätt datan i vår session
       session.isLoggedIn = true;
       // Spara sessionen, detta krypterar och sätter kakan
       await session.save();
-      
-      return NextResponse.json({ message: 'Inloggad!' }, { status: 200 });
+
+      return NextResponse.json({ message: "Inloggad!" }, { status: 200 });
     }
 
-    return NextResponse.json({ error: 'Ogiltigt lösenord' }, { status: 401 });
-
+    return NextResponse.json({ error: "Ogiltigt lösenord" }, { status: 401 });
   } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error("API Error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

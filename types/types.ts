@@ -2,7 +2,7 @@ export interface Member {
   id: string;
   name: string;
   current_shots: number;
-  group_type: 'Kex' | 'ESS' | 'Joker';
+  group_type: "Kex" | "ESS" | "Joker";
   created_at: string;
 }
 

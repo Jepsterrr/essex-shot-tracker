@@ -1,5 +1,5 @@
-import { getIronSession, IronSession, SessionOptions } from 'iron-session';
-import { cookies } from 'next/headers';
+import { getIronSession, IronSession, SessionOptions } from "iron-session";
+import { cookies } from "next/headers";
 
 export interface SessionData {
   isLoggedIn: boolean;
@@ -10,10 +10,10 @@ export const sessionOptions: SessionOptions = {
   password: process.env.IRON_SESSION_SECRET as string,
   cookieName: process.env.PASSWORD_COOKIE_NAME as string,
   cookieOptions: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === "production",
     httpOnly: true,
-    sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 365 * 1.25, 
+    sameSite: "strict",
+    maxAge: 60 * 60 * 24 * 365 * 1.25,
   },
 };
 
