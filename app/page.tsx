@@ -58,6 +58,15 @@ export default function HomePage() {
     };
   }, [dropdownRef]);
 
+  const resetForm = () => {
+    setSelectedMemberId('');
+    setChangeType('add');
+    setAmount(1);
+    setReason('');
+    setSelectedWitnesses([]);
+    setOtherWitnessValue('');
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setStatus({ message: '', type: '' });
@@ -69,7 +78,19 @@ export default function HomePage() {
 
     const selectedMember = members.find(m => m.id === selectedMemberId);
     if (!selectedMember) {
-        setStatus({ message: 'Kunde inte hitta medlemsdata.', type: 'error' });
+      setStatus({ message: 'Kunde inte hitta medlemsdata.', type: 'error' });
+      return;
+    }
+
+    const giverIds = selectedWitnesses
+      .map(witnessName => {
+        const member = members.find(m => m.name === witnessName && (m.group_type === 'ESS' || m.group_type === 'Joker'));
+        return member ? member.id : null;
+      })
+      .filter((id): id is string => id !== null);
+    
+    if (changeType === 'add' && giverIds.length === 0 && !otherWitnessValue.trim()) {
+        setStatus({ message: 'Minst ett vittne som är ESS/Joker eller ett "Annat vittne" måste anges för att dela ut straff.', type: 'error'});
         return;
     }
 
@@ -81,23 +102,25 @@ export default function HomePage() {
     }
 
     const res = await fetch('/api/log-shot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            member_id: selectedMemberId,
-            change: changeAmount,
-            reason,
-            witnesses: finalWitnesses,
-            group_type: selectedMember.group_type
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+          member_id: selectedMemberId,
+          change: changeAmount,
+          reason,
+          witnesses: finalWitnesses,
+          group_type: selectedMember.group_type,
+          giver_ids: changeType === 'add' ? giverIds : []
         })
     });
 
     if (!res.ok) {
-        const errorData = await res.json();
-        setStatus({ message: `Något gick fel: ${errorData.error || res.statusText}`, type: 'error' });
+      const errorData = await res.json();
+      setStatus({ message: `Något gick fel: ${errorData.error || res.statusText}`, type: 'error' });
     } else {
-        setStatus({ message: 'Shots loggade! Sidan kommer att laddas om.', type: 'success' });
-        setTimeout(() => window.location.reload(), 1500);
+        setStatus({ message: 'Shots loggade!', type: 'success' });
+        resetForm();
+        setTimeout(() => setStatus({ message: '', type: '' }), 4000);
     }
   };
   

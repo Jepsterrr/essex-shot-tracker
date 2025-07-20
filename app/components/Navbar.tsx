@@ -17,11 +17,11 @@ export default function Header() {
         {/* Desktopmeny */}
         <div className="hidden md:flex items-center space-x-6">
           <Link href="/" className="font-semibold hover:text-yellow-300 transition-colors">Logga Shot</Link>
-          <Link href="/standings" className="font-semibold hover:text-yellow-300 transition-colors">Ställning</Link>
           <Link href="/historik" className="font-semibold hover:text-yellow-300 transition-colors">Historik</Link>
+          <Link href="/standings" className="font-semibold hover:text-yellow-300 transition-colors">Ställning</Link>
+          <Link href="/topplistor" className="font-semibold hover:text-yellow-300 transition-colors">Topplistor</Link>
           <div className="flex items-center gap-4 pl-4 border-l-2 border-gray-500">
-            <Link href="/admin/medlemmar" className="text-sm hover:text-yellow-300">Admin: Medlemmar</Link>
-            <Link href="/admin/vittnen" className="text-sm hover:text-yellow-300">Admin: Externa Vittnen</Link>
+            <Link href="/admin" className="text-sm hover:text-yellow-300">Admin Panel</Link>
           </div>
         </div>
         
@@ -43,6 +43,7 @@ export default function Header() {
           <Link href="/" onClick={() => setIsMenuOpen(false)} className="font-bold hover:text-yellow-300 transition-colors">Logga Shot</Link>
           <Link href="/standings" onClick={() => setIsMenuOpen(false)} className="font-bold hover:text-yellow-300 transition-colors">Ställning</Link>
           <Link href="/historik" onClick={() => setIsMenuOpen(false)} className="font-bold hover:text-yellow-300 transition-colors">Historik</Link>
+          <Link href="/topplistor" onClick={() => setIsMenuOpen(false)} className="font-bold hover:text-yellow-300 transition-colors">Topplistor</Link>
           <div className="pt-8 border-t-2 border-gray-600 flex flex-col items-center space-y-6">
             <Link href="/admin/medlemmar" onClick={() => setIsMenuOpen(false)} className="text-base hover:text-yellow-300">Admin: Medlemmar</Link>
             <Link href="/admin/vittnen" onClick={() => setIsMenuOpen(false)} className="text-base hover:text-yellow-300">Admin: Vittnen</Link>

@@ -110,7 +110,7 @@ export default async function MemberDetailPage({ params }: { params: any }) {
 
       {/* --- Shots Tilldelade (Kex vs ESS) --- */}
       <section className="mb-12">
-          <h2 className="text-2xl font-serif text-center font-semibold mb-4 text-gray-200">Shots Erhållna</h2>
+          <h2 className="text-2xl font-serif text-center font-semibold mb-4 text-gray-200">Shots Mottagna</h2>
           <div className="max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
               <StatCard title="Som KEX" value={stats.givenAsKex} colorClass="text-red-500" />
               <StatCard title="Som ESS" value={stats.givenAsEss} colorClass="text-red-500" />

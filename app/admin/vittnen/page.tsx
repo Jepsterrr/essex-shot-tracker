@@ -25,17 +25,29 @@ export default function AdminWitnessesPage() {
   const handleAddWitness = async (e: FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
+
+    // Optimistisk uppdatering
+    const tempId = `temp-${Date.now()}`;
+    const newWitnessOptimistic: Witness = {
+      id: tempId,
+      name: newName.trim()
+    };
+    setWitnesses(prev => [newWitnessOptimistic, ...prev].sort((a, b) => a.name.localeCompare(b.name)));
+    const originalName = newName;
+    setNewName('');
+
     const res = await fetch('/api/witnesses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName.trim() }),
+      body: JSON.stringify({ name: newWitnessOptimistic.name }),
     });
     if (!res.ok) {
-        const { error } = await res.json();
-        setStatus(`Kunde inte lägga till vittne: ${error}`);
+      const { error } = await res.json();
+      setStatus(`Kunde inte lägga till vittne: ${error}`);
+      setWitnesses(prev => prev.filter(w => w.id !== tempId));
+      setNewName(originalName);
     } else {
-      setNewName('');
-      setStatus(`Vittne "${newName.trim()}" tillagt!`);
+      setStatus(`Vittne "${newWitnessOptimistic.name}" tillagt!`);
       await fetchWitnesses();
       router.refresh();
       setTimeout(() => setStatus(''), 3000);

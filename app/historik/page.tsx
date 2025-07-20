@@ -1,25 +1,40 @@
 import { supabase } from '@/lib/supabase-client';
 import type { ShotLog } from '@/types/types';
 import Link from 'next/link';
+import SearchBar from './SearchBar';
 
 export const dynamic = 'force-dynamic';
 
 const ITEMS_PER_PAGE = 25;
 
-async function getHistory(currentPage: number) {
+async function getHistory(currentPage: number, query: string | undefined) {
   const from = (currentPage - 1) * ITEMS_PER_PAGE;
   const to = from + ITEMS_PER_PAGE - 1;
 
-  const { data, error, count } = await supabase
+  let supabaseQuery = supabase
     .from('shot_log')
     .select(`
-      id,
-      created_at,
-      change,
-      reason,
-      witnesses,
+      id, created_at, change, reason, witnesses,
       members ( name )
-    `, { count: 'exact' })
+    `, { count: 'exact' });
+
+  if (query) {
+    const { data: matchingMembers } = await supabase
+      .from('members')
+      .select('id')
+      .ilike('name', `%${query}%`);
+    
+    const memberIds = matchingMembers ? matchingMembers.map(m => m.id) : [];
+
+    const orConditions = [
+      `reason.ilike.%${query}%`,
+      ...(memberIds.length > 0 ? [`member_id.in.(${memberIds.join(',')})`] : [])
+    ].join(',');
+
+    supabaseQuery = supabaseQuery.or(orConditions);
+  }
+
+  const { data, error, count } = await supabaseQuery
     .order('created_at', { ascending: false })
     .range(from, to);
 
@@ -33,7 +48,8 @@ async function getHistory(currentPage: number) {
 
 export default async function HistoryPage({ searchParams }: { searchParams: any }) {
   const currentPage = Number(searchParams.page) || 1;
-  const { history, totalCount } = await getHistory(currentPage);
+  const searchQuery = searchParams.query;
+  const { history, totalCount } = await getHistory(currentPage, searchQuery);
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   return (
@@ -41,10 +57,17 @@ export default async function HistoryPage({ searchParams }: { searchParams: any 
       <div className="p-4 md:p-8">
         <h1 className="text-3xl md:text-5xl font-serif font-bold text-gray-300 mb-2">Händelselogg</h1>
         <p className="text-gray-400 mb-6 md:mb-8">Historik över alla registrerade shots.</p>
-        
+
+        {/* Sökfältet */}
+        <div className="mb-6">
+          <SearchBar placeholder="Sök på namn eller anledning..." />
+        </div>
+
         <div className="border-t border-gray-400 pt-6">
             {history.length === 0 ? (
-                <p className="text-center text-gray-200 py-12 border">Inga händelser har loggats än.</p>
+                <p className="text-center text-gray-200 py-12 border">
+                    {searchQuery ? `Inga händelser matchade din sökning "${searchQuery}".` : 'Inga händelser har loggats än.'}
+                </p>
             ) : (
                 <>
                     <div className="overflow-x-auto">
@@ -91,7 +114,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: any 
 
                     {/* Paginering-knappar är nu <Link>-taggar */}
                     <div className="flex items-center justify-between mt-6">
-                        <Link href={`/historik?page=${currentPage - 1}`}
+                        <Link href={`/historik?page=${currentPage - 1}${searchQuery ? '&query=' + searchQuery : ''}`}
                             aria-disabled={currentPage <= 1}
                             className={`bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded hover:bg-gray-300 ${currentPage <= 1 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
                             Föregående
@@ -99,7 +122,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: any 
                         <span className="text-sm font-semibold text-gray-200">
                             Sida {currentPage} av {totalPages}
                         </span>
-                        <Link href={`/historik?page=${currentPage + 1}`}
+                        <Link href={`/historik?page=${currentPage + 1}${searchQuery ? '&query=' + searchQuery : ''}`}
                             aria-disabled={currentPage >= totalPages}
                             className={`bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded hover:bg-gray-300 ${currentPage >= totalPages ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}>
                             Nästa

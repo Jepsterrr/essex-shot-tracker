@@ -47,17 +47,34 @@ export default function AdminMembersPage() {
   const handleAddMember = async (e: FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
+
+    const tempId = `temp-${Date.now()}`
+    const newMemberOptimistic = {
+      id: tempId,
+      name: newName.trim(),
+      group_type: newMemberGroup,
+      is_active: true,
+      current_shots: 0,
+      created_at: new Date().toISOString()
+    }
+
+    // Optimistic Uppdatering
+    setActiveMembers(prev => [newMemberOptimistic, ...prev].sort((a, b) => a.name.localeCompare(b.name)));
+    const originalName = newName;
+    setNewName('');
+
     const res = await fetch('/api/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName.trim(), group_type: newMemberGroup }),
+      body: JSON.stringify({ name: newMemberOptimistic.name, group_type: newMemberOptimistic.group_type }),
     });
     if (!res.ok) {
       const { error } = await res.json();
       setStatus(`Kunde inte lägga till medlem: ${error}`);
+      setActiveMembers(prev => prev.filter(m => m.id !== tempId));
+      setNewName(originalName);
     } else {
-      setNewName('');
-      setStatus(`Medlem "${newName.trim()}" tillagd!`);
+      setStatus(`Medlem "${newMemberOptimistic.name}" tillagd!`);
       await refreshAllData();
     }
   };
