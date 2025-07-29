@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, useMemo } from "react";
 import { supabase } from "@/lib/supabase-client";
 import type { Member } from "@/types/types";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,10 @@ export default function AdminMembersPage() {
   // State för komponentens data
   const [activeMembers, setActiveMembers] = useState<Member[]>([]);
   const [archivedMembers, setArchivedMembers] = useState<Member[]>([]);
+
+  // State för sortering av arkiverade medlemmar
+  const [sortKey, setSortKey] = useState<"name" | "created_at">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   // State för formulär och statusmeddelanden
   const [newName, setNewName] = useState("");
@@ -173,6 +177,29 @@ export default function AdminMembersPage() {
     }
   };
 
+  const sortedArchivedMembers = useMemo(() => {
+    return [...archivedMembers].sort((a, b) => {
+      if (sortKey === "name") {
+        return sortOrder === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      } else {
+        return sortOrder === "asc"
+          ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          : new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+  }, [archivedMembers, sortKey, sortOrder]);
+
+  const handleSort = (key: "name" | "created_at") => {
+    if (key === sortKey) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortOrder("asc");
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto bg-card-white text-gray-800 rounded-xl shadow-2xl border border-gray-200/10">
       <div className="p-4 md:p-8">
@@ -317,19 +344,25 @@ export default function AdminMembersPage() {
                   ) : (
                     // Visningsläge
                     <div className="flex-grow flex items-center mb-2 sm:mb-0">
-                      <span className="p-1 font-medium text-gray-100">
-                        {member.name}
-                      </span>
-                      <span
-                        className={`text-xs font-bold ml-2 px-2 py-0.5 rounded-full ${
-                          member.group_type === "Kex"
-                            ? "bg-blue-100 text-blue-800"
-                            : member.group_type == "Joker"
-                            ? "bg-purple-100 text-purple-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {member.group_type}
+                      <div>
+                        <span className="p-1 font-medium text-gray-100">
+                          {member.name}
+                        </span>
+                        <span
+                          className={`text-xs font-bold ml-2 px-2 py-0.5 rounded-full ${
+                            member.group_type === "Kex"
+                              ? "bg-blue-100 text-blue-800"
+                              : member.group_type == "Joker"
+                              ? "bg-purple-100 text-purple-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {member.group_type}
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-300 ml-auto">
+                        Skapad:{" "}
+                        {new Date(member.created_at).toLocaleDateString()}
                       </span>
                     </div>
                   )}
@@ -383,16 +416,46 @@ export default function AdminMembersPage() {
             Medlemmar här är dolda från vanliga listor men deras historik finns
             kvar. Härifrån kan de återaktiveras eller raderas permanent.
           </p>
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => handleSort("name")}
+              className={`font-semibold text-xs py-1 px-3 rounded-md ${
+                sortKey === "name"
+                  ? "bg-amber-400/80 text-black hover:bg-amber-400/90"
+                  : "text-gray-200 hover:bg-gray-600"
+              }`}
+            >
+              Namn{" "}
+              {sortKey === "name" && (sortOrder === "asc" ? "(A-Ö)" : "(Ö-A)")}
+            </button>
+            <button
+              onClick={() => handleSort("created_at")}
+              className={`font-semibold text-xs py-1 px-3 rounded-md ${
+                sortKey === "created_at"
+                  ? "bg-amber-400/80 text-black hover:bg-amber-400/90"
+                  : "text-gray-200 hover:bg-gray-600"
+              }`}
+            >
+              Skapad{" "}
+              {sortKey === "created_at" &&
+                (sortOrder === "desc" ? "(Nyast)" : "(Äldst)")}
+            </button>
+          </div>
           <div className="border border-gray-300 rounded-lg overflow-hidden">
             <ul className="divide-y divide-gray-200">
-              {archivedMembers.map((member) => (
+              {sortedArchivedMembers.map((member) => (
                 <li
                   key={member.id}
                   className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 gap-2 bg-gray-600/50"
                 >
-                  <span className="p-1 font-medium text-gray-50 italic mb-2 sm:mb-0">
-                    {member.name}
-                  </span>
+                  <div>
+                    <span className="p-1 font-medium text-gray-50 italic mb-2 sm:mb-0">
+                      {member.name}
+                    </span>
+                    <span className="text-xs text-gray-400 ml-2">
+                      Skapad: {new Date(member.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-end space-x-2 flex-shrink-0">
                     <button
                       onClick={() =>
