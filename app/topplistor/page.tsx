@@ -84,7 +84,7 @@ export default async function ToplistPage() {
         Hall of Shame & Fame
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <ToplistCard title="The Punisher" subtitle="Flest utdelade shots">
+        <ToplistCard title="The Punisher" subtitle="Flest bevittnade shots">
           {punishers.length > 0 ? (
             punishers.map((p, i) => (
               <div
