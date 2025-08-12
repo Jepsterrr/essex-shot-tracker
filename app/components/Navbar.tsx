@@ -8,7 +8,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="bg-gray-900/80 backdrop-blur-sm text-white sticky top-0 z-50 border-b border-gray-700 pt-[env(safe-area-inset-top)]">
+    <header className="site-header backdrop-blur-sm text-white sticky top-0 z-50 border-b border-gray-700">
       <nav className="container mx-auto flex justify-between items-center p-3">
         <Link
           href="/"
@@ -101,7 +101,7 @@ export default function Header() {
 
       {/* Mobilmeny-overlay */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-0 left-0 w-full h-screen bg-gray-900 flex flex-col items-center justify-center space-y-8 text-xl">
+        <div className="md:hidden absolute top-0 left-0 w-full h-screen bg-gray-900 flex flex-col items-center justify-center space-y-8 text-xl mobile-overlay">
           <Link
             href="/"
             onClick={() => setIsMenuOpen(false)}
