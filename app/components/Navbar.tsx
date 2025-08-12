@@ -101,7 +101,7 @@ export default function Header() {
 
       {/* Mobilmeny-overlay */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-0 left-0 w-full h-screen bg-gray-900 flex flex-col items-center justify-center space-y-8 text-xl mobile-overlay">
+        <div className="md:hidden mobile-overlay">
           <Link
             href="/"
             onClick={() => setIsMenuOpen(false)}
