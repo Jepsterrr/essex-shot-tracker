@@ -34,11 +34,11 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
           name="apple-mobile-web-app-status-bar-style"
-          content="black-translucent"
+          content="black"
         />
 
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#0f172a" />
+        <meta name="theme-color" content="#000000" />
       </head>
       <body
         className={`${inter.variable} ${ebGaramond.variable} font-sans text-gray-100`}

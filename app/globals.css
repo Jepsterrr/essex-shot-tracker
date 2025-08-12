@@ -127,18 +127,13 @@ body {
 
 /* Safe area insets för iOS */
 .site-header {
-  /* tryck innehåll nedanför status-bar */
   padding-top: constant(safe-area-inset-top);
   padding-top: env(safe-area-inset-top);
-
-  /* ta bort negativa margin-hacket om du hade det */
   margin-top: 0;
-
-  /* se till att header är sticky/överst */
   position: sticky;
   top: 0;
-  z-index: 60; /* högre än ::before */
-  background-color: rgba(15, 23, 42, 0.95);
+  z-index: 60;
+  background-color: #000;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
@@ -151,9 +146,9 @@ body {
   right: 0;
   height: constant(safe-area-inset-top);
   height: env(safe-area-inset-top);
-  background-color: rgba(15, 23, 42, 0.95);
-  z-index: 55; /* mindre än .site-header (60), större än body */
-  pointer-events: none; /* inte fånga klick */
+  background: #000;
+  z-index: 59;
+  pointer-events: none;
 }
 
 .mobile-overlay {
@@ -164,8 +159,8 @@ body {
   height: 100vh;
   padding-top: constant(safe-area-inset-top);
   padding-top: env(safe-area-inset-top);
-  background-color: rgba(15, 23, 42, 0.98);
-  z-index: 70; /* ovanpå header */
+  background-color: #000;
+  z-index: 70;
   display: flex;
   flex-direction: column;
   align-items: center;
