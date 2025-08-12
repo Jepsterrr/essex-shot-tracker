@@ -23,12 +23,19 @@ export default function RootLayout({
   return (
     <html lang="sv">
       <head>
-        <link rel="icon" href="/Essex_Logga.png" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
 
+        <link rel="icon" href="/Essex_Logga.png" />
         <link rel="apple-touch-icon" href="/Essex_Logga.png" />
         <meta name="apple-mobile-web-app-title" content="Essex Straffshots" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
 
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0f172a" />
