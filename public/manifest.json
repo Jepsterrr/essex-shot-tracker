@@ -1,0 +1,16 @@
+{
+  "name": "Essex Straffshot",
+  "short_name": "Essex Straffshots",
+  "description": "Håller koll på allas straffshots!",
+  "icons": [
+    {
+      "src": "/Essex_Logga.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a",
+  "display": "standalone",
+  "start_url": "/"
+}

@@ -16,7 +16,7 @@ export default function Header() {
           onClick={() => isMenuOpen && setIsMenuOpen(false)}
         >
           <Image
-            src="/logo.png"
+            src="/Essex_Logga.png"
             alt="Essex Logo"
             width={60}
             height={60}
