@@ -13,11 +13,26 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html, body, #__next {
+  height: 100%;
+  min-height: 100%;
+  overscroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 body {
   background: #0f172a;
   background-image: url("/felt-texture.png");
   background-repeat: repeat;
   color: var(--foreground);
+}
+
+main, .container, .max-w-3xl {
+  -webkit-overflow-scrolling: touch;
+}
+
+.max-w-3xl, .card-white, .form-container {
+  transform: none !important;
 }
 
 /* Döljer upp/ner-pilarna i WebKit-baserade webbläsare (Chrome, Safari, Edge) */
@@ -165,4 +180,16 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+input, textarea, select {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+  touch-action: manipulation;
+  cursor: text;
+}
+
+.debug-pointer-none * {
+  pointer-events: none !important;
 }
