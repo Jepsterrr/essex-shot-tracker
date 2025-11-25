@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase-client";
 import type { ShotLog } from "@/types/types";
 import Link from "next/link";
 import SearchBar from "./SearchBar";
+import DeleteButton from "./DeleteButton";
 
 export const dynamic = "force-dynamic";
 
@@ -180,6 +181,15 @@ export default async function HistoryPage({
                             })}
                           </span>
                         </td>
+
+                        <td className="flex justify-end p-3 lg:table-cell lg:py-4 lg:pr-6 lg:text-right">
+                          <DeleteButton 
+                            logId={log.id} 
+                            memberName={log.members?.name ?? "Okänd"} 
+                            change={log.change} 
+                          />
+                        </td>
+
                       </tr>
                     ))}
                   </tbody>
