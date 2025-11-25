@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase-client";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("members")
       .insert({ name, group_type });
 
@@ -62,7 +62,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const { error } = await supabase.from("members").delete().eq("id", id);
+    const { error } = await supabaseAdmin.from("members").delete().eq("id", id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -94,7 +94,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("members")
       .update({ is_active: is_active })
       .eq("id", id);
@@ -132,7 +132,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("members")
       .update({ name: newName, group_type: newGroup })
       .eq("id", id);

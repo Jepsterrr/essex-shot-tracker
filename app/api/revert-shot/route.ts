@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase-client";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 
@@ -18,7 +18,7 @@ export async function DELETE(request: Request) {
             return NextResponse.json({ error: "Log ID is required" }, { status: 400 });
         }
 
-        const { error } = await supabase.rpc("revert_shot_log", {
+        const { error } = await supabaseAdmin.rpc("revert_shot_log", {
             target_log_id: id,
         });
 

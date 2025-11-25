@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase-client";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error } = await supabase.rpc("handle_new_shot_log", {
+    const { error } = await supabaseAdmin.rpc("handle_new_shot_log", {
       member_uuid: member_id,
       change_amount: change,
       reason_text: reason,

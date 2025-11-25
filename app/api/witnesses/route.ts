@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase-client";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSession } from "@/lib/session";
 
 // POST för att skapa ett nytt vittne
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
         status: 400,
       });
     }
-    const { error } = await supabase.from("witnesses").insert({ name });
+    const { error } = await supabaseAdmin.from("witnesses").insert({ name });
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
@@ -50,7 +50,7 @@ export async function DELETE(request: Request) {
         status: 400,
       });
     }
-    const { error } = await supabase.from("witnesses").delete().eq("id", id);
+    const { error } = await supabaseAdmin.from("witnesses").delete().eq("id", id);
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
@@ -83,7 +83,7 @@ export async function PUT(request: Request) {
         { status: 400 }
       );
     }
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("witnesses")
       .update({ name: newName })
       .eq("id", id);
