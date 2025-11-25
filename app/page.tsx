@@ -320,11 +320,11 @@ export default function HomePage() {
                   className={`
                     flex-grow md:flex-grow-0 py-3 px-4 rounded-lg font-semibold text-base transition-all duration-200 border
                     ${isSelected 
-                      ? "bg-red-700/50 text-white border-red-500 shadow-[0_0_10px_rgba(212,175,55,0.5)]" 
+                      ? "bg-red-700/50 text-white border-amber-400 shadow-[0_0_10px_rgba(212,175,55,0.5)]" 
                       : "bg-gray-700/50 text-gray-300 border-gray-600 hover:bg-gray-600"}
                   `}
                 >
-                  {w.name} {isSelected && "✓"}
+                  {w.name}
                 </button>
               );
             })}
