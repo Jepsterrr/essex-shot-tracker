@@ -4,11 +4,13 @@ import { useState, useEffect, FormEvent, useRef } from "react";
 import { supabase } from "@/lib/supabase-client";
 import type { Member } from "@/types/types";
 import type { Witness } from "@/types/types";
+import LoadingSkeleton from "./loading";
 
 export default function HomePage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [allWitnessOptions, setAllWitnessOptions] = useState<Witness[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [changeType, setChangeType] = useState<"add" | "remove">("add");
   const [amount, setAmount] = useState<number | "">(1);
   const [reason, setReason] = useState<string>("");
@@ -23,43 +25,50 @@ export default function HomePage() {
 
   useEffect(() => {
     async function fetchData() {
-      // Hämta medlemmar som kan få shots
-      const { data: membersToReceiveShots } = await supabase
-        .from("members")
-        .select("*")
-        .eq("is_active", true)
-        .not("group_type", "eq", "Joker")
-        .order("name");
-      if (membersToReceiveShots) setMembers(membersToReceiveShots);
+      try {
+        // Hämta medlemmar som kan få shots
+        const { data: membersToReceiveShots } = await supabase
+          .from("members")
+          .select("*")
+          .eq("is_active", true)
+          .not("group_type", "eq", "Joker")
+          .order("name");
+        if (membersToReceiveShots) setMembers(membersToReceiveShots);
 
-      // Hämta medlemmar som kan vittna
-      const { data: membersWhoCanWitness } = await supabase
-        .from("members")
-        .select("id, name, group_type")
-        .eq("is_active", true)
-        .in("group_type", ["ESS", "Joker"]);
+        // Hämta medlemmar som kan vittna
+        const { data: membersWhoCanWitness } = await supabase
+          .from("members")
+          .select("id, name, group_type")
+          .eq("is_active", true)
+          .in("group_type", ["ESS", "Joker"]);
 
-      // Hämta manuellt tillagda vittnen från 'witnesses'-tabellen
-      const { data: witnessData } = await supabase
-        .from("witnesses")
-        .select("*")
-        .order("name");
+        // Hämta manuellt tillagda vittnen från 'witnesses'-tabellen
+        const { data: witnessData } = await supabase
+          .from("witnesses")
+          .select("*")
+          .order("name");
 
-      const memberWitnesses: Witness[] = (membersWhoCanWitness || []).map(
-        (m) => ({ id: m.id, name: m.name })
-      );
+        const memberWitnesses: Witness[] = (membersWhoCanWitness || []).map(
+          (m) => ({ id: m.id, name: m.name })
+        );
 
-      // Slå ihop de manuella vittnena med de kvalificerade medlemmarna
-      const combined = [...(witnessData || []), ...memberWitnesses];
+        // Slå ihop de manuella vittnena med de kvalificerade medlemmarna
+        const combined = [...(witnessData || []), ...memberWitnesses];
 
-      // Ta bort eventuella dubbletter om en medlem också finns i den manuella listan
-      const uniqueWitnesses = Array.from(
-        new Map(combined.map((item) => [item.name, item])).values()
-      );
+        // Ta bort eventuella dubbletter
+        const uniqueWitnesses = Array.from(
+          new Map(combined.map((item) => [item.name, item])).values()
+        );
 
-      setAllWitnessOptions(
-        uniqueWitnesses.sort((a, b) => a.name.localeCompare(b.name))
-      );
+        setAllWitnessOptions(
+          uniqueWitnesses.sort((a, b) => a.name.localeCompare(b.name))
+        );
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        // När all data är hämtad, stäng av laddning
+        setIsLoadingData(false);
+      }
     }
     fetchData();
   }, []);
@@ -187,6 +196,10 @@ export default function HomePage() {
     members.find((m) => m.id === selectedMemberId)?.name || "Välj en medlem...";
 
   const isAddMode = changeType === "add";
+
+  if (isLoadingData) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <div className="max-w-3xl mx-auto">
