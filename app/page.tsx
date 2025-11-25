@@ -369,7 +369,7 @@ export default function HomePage() {
                 : "bg-green-600/70 border-green-900 hover:bg-green-500 shadow-green-900/30 shadow-lg"}
             `}
           >
-            <span className="text-2xl">♣ Registrera Händelse ♥</span>
+            <span className="text-2xl">♣ Registrera ♥</span>
             <span className="text-lg font-sans font-normal opacity-90 mt-1">
               {isAddMode ? "(Ge Straff)" : "(SKÅL!)"}
             </span>
