@@ -9,6 +9,7 @@ export interface SessionData {
 export const sessionOptions: SessionOptions = {
   password: process.env.IRON_SESSION_SECRET as string,
   cookieName: process.env.PASSWORD_COOKIE_NAME as string,
+  ttl: 60 * 60 * 24 * 365 * 1.25,
   cookieOptions: {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
