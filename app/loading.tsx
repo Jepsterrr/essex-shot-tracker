@@ -2,7 +2,9 @@ export default function Loading() {
     return (
         <div className="max-w-3xl mx-auto pb-20 animate-pulse">
         {/* Rubrik Skeleton */}
-            <div className="h-12 w-3/4 mx-auto bg-gray-700 rounded-lg mb-8"></div>
+            <h1 className="text-5xl font-serif font-bold text-center mb-8 text-essex-gold drop-shadow-lg">
+                Shot-Protokoll
+            </h1>
 
             <div className="space-y-8 bg-card-white p-6 sm:p-8 rounded-xl border border-gray-200/10">
             
