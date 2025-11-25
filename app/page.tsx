@@ -91,8 +91,9 @@ export default function HomePage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setStatus({ message: "", type: "" });
+    const numAmount = Number(amount);
 
-    if (!selectedMemberId || Number(amount) <= 0) {
+    if (!selectedMemberId || numAmount <= 0) {
       setStatus({
         message: "Välj en medlem och ange ett antal större än noll.",
         type: "error",
@@ -130,8 +131,7 @@ export default function HomePage() {
       return;
     }
 
-    const changeAmount =
-      changeType === "add" ? Number(amount) : -Number(amount);
+    const changeAmount = changeType === "add" ? numAmount : -numAmount;
 
     const finalWitnesses = [...selectedWitnesses];
     if (otherWitnessValue.trim()) {
@@ -172,8 +172,21 @@ export default function HomePage() {
     );
   };
 
+  const incrementAmount = () => {
+    setAmount((prev) => (typeof prev === "number" ? prev + 1 : 1));
+  };
+  
+  const decrementAmount = () => {
+    setAmount((prev) => {
+      if (typeof prev !== "number") return 1;
+      return prev > 1 ? prev - 1 : 1;
+    });
+  };
+
   const selectedMemberName =
     members.find((m) => m.id === selectedMemberId)?.name || "Välj en medlem...";
+
+  const isAddMode = changeType === "add";
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -185,202 +198,194 @@ export default function HomePage() {
         onSubmit={handleSubmit}
         className="space-y-6 bg-card-white text-gray-200 p-8 rounded-xl shadow-2xl border border-gray-200/10"
       >
+        {/* --- VÄLJ MEDLEM --- */}
         <div>
-          <label
-            htmlFor="member"
-            className="block text-lg font-semibold mb-2 text-gray-200"
-          >
+          <label className="block text-lg font-semibold mb-3 text-gray-200">
             Vem gäller det?
           </label>
-
           <div className="relative" ref={dropdownRef}>
-            <div
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className={`
-                form-select
-                w-full rounded-md border-2 transition-all duration-200
-                ${
-                  isDropdownOpen
-                    ? "border-amber-300/70 shadow-lg"
-                    : "border-gray-400 hover:border-gray-500"
-                }
+                w-full p-4 text-xl font-bold text-left grid grid-cols-[1fr_auto] items-center gap-4 rounded-xl border-2 transition-all duration-200
+                ${isDropdownOpen ? "border-amber-300/80 shadow-lg bg-gray-700" : "bg-gray-600/50 border-gray-500 hover:bg-gray-600"}
               `}
             >
-              <button
-                type="button"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-full p-3 text-lg text-left grid grid-cols-[1fr_auto] items-center gap-4"
+              <span className="truncate">{selectedMemberName}</span>
+              <svg
+                className={`w-6 h-6 transition-transform duration-200 ${isDropdownOpen ? "rotate-180 text-amber-300/80" : "text-gray-400"}`}
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"
               >
-                <span className="truncate">{selectedMemberName}</span>
-                <span className="flex items-center">
-                  <svg
-                    className={`w-6 h-6 text-gray-400 transition-transform duration-200 ${
-                      isDropdownOpen ? "transform rotate-180" : ""
-                    }`}
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    stroke="currentColor"
+                <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
+
+            {isDropdownOpen && (
+              <ul className="absolute z-50 w-full mt-2 max-h-80 overflow-auto bg-gray-800 rounded-xl border-2 border-amber-300/80 shadow-2xl">
+                {members.map((member) => (
+                  <li
+                    key={member.id}
+                    onClick={() => {
+                      setSelectedMemberId(member.id);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="p-4 text-white text-lg font-medium cursor-pointer hover:bg-gray-600 border-b border-gray-700 last:border-0"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                    />
-                  </svg>
-                </span>
-              </button>
-
-              {isDropdownOpen && (
-                <ul className="w-full bg-gray-700 overflow-auto border-t-2 border-amber-300/70">
-                  {members.map((member) => (
-                    <li
-                      key={member.id}
-                      onClick={() => {
-                        setSelectedMemberId(member.id);
-                        setIsDropdownOpen(false);
-                      }}
-                      className="p-3 text-white text-lg cursor-pointer hover:bg-gray-500"
-                    >
-                      {member.name}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                    {member.name}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-lg font-semibold mb-2 text-gray-200">
-              Typ av ändring (+/-)
-            </label>
-            <div className="flex items-center space-x-6 mt-3">
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  name="changeType"
-                  value="add"
-                  checked={changeType === "add"}
-                  onChange={() => setChangeType("add")}
-                  className="form-radio value-add h-5 w-5"
-                />
-                <span className="ml-2 text-lg">Lägg till</span>
-              </label>
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  name="changeType"
-                  value="remove"
-                  checked={changeType === "remove"}
-                  onChange={() => setChangeType("remove")}
-                  className="form-radio value-remove h-5 w-5"
-                />
-                <span className="ml-2 text-lg">Ta bort</span>
-              </label>
-            </div>
-          </div>
-          <div>
-            <label
-              htmlFor="amount"
-              className="block text-lg font-semibold mb-2 text-gray-200"
+        {/* --- LÄGE & ANTAL --- */}
+        <div className="space-y-4">
+          
+          {/* Toggle Switch */}
+          <div className="grid grid-cols-2 bg-gray-900 p-1 rounded-xl border border-gray-600">
+            <button
+              type="button"
+              onClick={() => setChangeType("add")}
+              className={`py-4 text-lg font-bold rounded-lg transition-all duration-300 ${
+                isAddMode
+                  ? "bg-red-700/50 text-white shadow-lg scale-100"
+                  : "text-gray-400 hover:text-gray-200"
+              }`}
             >
-              Antal
-            </label>
-            <input
-              type="number"
-              id="amount"
-              value={amount}
-              placeholder="Skriv antal..."
-              className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg shadow-sm no-spinner"
-              onChange={(e) =>
-                setAmount(e.target.value === "" ? "" : Number(e.target.value))
-              }
-              onBlur={() => {
-                if (Number(amount) < 1) setAmount(1);
-              }}
-              min="1"
-              required
-            />
+              LÄGG TILL
+            </button>
+            <button
+              type="button"
+              onClick={() => setChangeType("remove")}
+              className={`py-4 text-lg font-bold rounded-lg transition-all duration-300 ${
+                !isAddMode
+                  ? "bg-green-600/70 text-white shadow-lg scale-100"
+                  : "text-gray-400 hover:text-gray-200"
+              }`}
+            >
+              TA BORT
+            </button>
+          </div>
+
+          {/* Stepper med Input */}
+          <div className="flex items-center justify-between bg-gray-600/30 p-2 rounded-xl border border-gray-600">
+            <button
+              type="button"
+              onClick={decrementAmount}
+              className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-3xl font-bold transition-colors active:bg-gray-800"
+            >
+              −
+            </button>
+            
+            <div className="flex flex-col items-center flex-grow px-4">
+              <span className="text-sm text-gray-200 uppercase tracking-widest font-bold mb-1">Antal</span>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                className={`
+                  w-full bg-transparent text-center text-5xl font-bold border-none focus:ring-0 p-0 no-spinner
+                  ${isAddMode ? 'text-essex-red placeholder-red-800' : 'text-green-500 placeholder-green-800'}
+                `}
+                placeholder="0"
+                min="1"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={incrementAmount}
+              className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-3xl font-bold transition-colors active:bg-gray-800"
+            >
+              +
+            </button>
           </div>
         </div>
 
+        {/* --- VITTNEN --- */}
         <div>
-          <label className="block text-lg font-semibold mb-2 text-gray-200">
-            Vittnen
+          <label className="block text-lg font-semibold mb-3 text-gray-200">
+            Vilka såg det?
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-4 bg-gray-600/40 border border-gray-200 rounded-lg">
-            {allWitnessOptions.map((w) => (
-              <label
-                key={w.id}
-                className="flex items-center space-x-2 cursor-pointer text-white p-2 rounded hover:bg-gray-600"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedWitnesses.includes(w.name)}
-                  onChange={() => handleWitnessChange(w.name)}
-                  className="form-checkbox"
-                />
-                <span className="font-medium">{w.name}</span>
-              </label>
-            ))}
+          <div className="flex flex-wrap gap-3">
+            {allWitnessOptions.map((w) => {
+              const isSelected = selectedWitnesses.includes(w.name);
+              return (
+                <button
+                  key={w.id}
+                  type="button"
+                  onClick={() => handleWitnessChange(w.name)}
+                  className={`
+                    flex-grow md:flex-grow-0 py-3 px-4 rounded-lg font-semibold text-base transition-all duration-200 border
+                    ${isSelected 
+                      ? "bg-red-700/50 text-white border-red-500 shadow-[0_0_10px_rgba(212,175,55,0.5)]" 
+                      : "bg-gray-700/50 text-gray-300 border-gray-600 hover:bg-gray-600"}
+                  `}
+                >
+                  {w.name} {isSelected && "✓"}
+                </button>
+              );
+            })}
           </div>
         </div>
 
+        {/* --- ÖVRIGT VITTNE --- */}
         <div>
-          <label
-            htmlFor="otherWitness"
-            className="block text-lg font-semibold mb-2 text-gray-300"
-          >
-            Annat vittne?
-          </label>
           <input
             type="text"
             id="otherWitness"
-            placeholder="Skriv namn på övrigt vittne..."
+            placeholder="+ Annat vittne (namn)"
             value={otherWitnessValue}
             onChange={(e) => setOtherWitnessValue(e.target.value)}
-            className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg shadow-sm"
+            className="form-input w-full bg-gray-800/50 border border-gray-600 rounded-lg p-4 text-lg text-white placeholder-gray-500 focus:border-essex-gold focus:ring-1 focus:ring-essex-gold transition-all"
           />
         </div>
 
+        {/* --- ANLEDNING --- */}
         <div>
-          <label
-            htmlFor="reason"
-            className="block text-lg font-semibold mb-2 text-gray-300"
-          >
+          <label className="block text-lg font-semibold mb-2 text-gray-300">
             Anledning
           </label>
           <textarea
             id="reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            rows={3}
-            placeholder="Skriv anledning här..."
-            className="form-input w-full bg-white border border-gray-400 rounded-md p-3 text-lg shadow-sm"
+            rows={2}
+            placeholder="Varför?"
+            className="form-input w-full bg-gray-800/50 border border-gray-600 rounded-lg p-4 text-lg text-white placeholder-gray-500 focus:border-essex-gold focus:ring-1 focus:ring-essex-gold transition-all"
           ></textarea>
         </div>
 
+        {/* --- SUBMIT --- */}
         <div className="pt-4">
           <button
             type="submit"
-            className="w-full text-white font-serif tracking-wider font-bold text-xl py-3 rounded-lg bg-essex-red hover:border-7 transition-all duration-300 transform hover:scale-105 border-b-3 border-t-3 border-red-900 active:border-b-2 active:scale-100"
+            className={`
+              w-full text-white font-serif tracking-wider font-bold py-4 rounded-xl border-b-4 transition-all duration-200 transform active:scale-[0.98] active:border-b-0 active:translate-y-1 flex flex-col items-center justify-center
+              ${isAddMode 
+                ? "bg-red-700/50 border-red-900 hover:bg-red-700 shadow-red-900/30 shadow-lg" 
+                : "bg-green-600/70 border-green-900 hover:bg-green-500 shadow-green-900/30 shadow-lg"}
+            `}
           >
-            ♣ Registrera Händelse ♥
+            <span className="text-2xl">♣ Registrera Händelse ♥</span>
+            <span className="text-lg font-sans font-normal opacity-90 mt-1">
+              {isAddMode ? "(Ge Straff)" : "(SKÅL!)"}
+            </span>
           </button>
         </div>
 
         {status.message && (
-          <p
-            className={`text-center p-3 rounded-md mt-4 ${
+          <div
+            className={`text-center p-4 rounded-xl mt-4 font-bold text-lg border-2 animate-pulse ${
               status.type === "success"
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-essex-red"
+                ? "bg-green-900/30 border-green-500 text-green-400"
+                : "bg-red-900/30 border-red-500 text-red-400"
             }`}
           >
             {status.message}
-          </p>
+          </div>
         )}
       </form>
     </div>
