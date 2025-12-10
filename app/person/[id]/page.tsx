@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase-client";
 import type { ShotLog } from "@/types/types";
 import PaginatedLogTable from "./PaginatedLogTable";
+import WitnessLogTable from "./WitnessLogTable";
 import BackButton from "./BackButton";
 
 export const dynamic = "force-dynamic";
@@ -12,29 +13,43 @@ async function getMemberDetails(id: string) {
     .select("*")
     .eq("id", id)
     .single();
+
   const logsPromise = supabase
     .from("shot_log")
     .select("*, group_type_at_log_time")
     .eq("member_id", id);
 
+  const witnessLogsPromise = supabase
+    .from("shot_log")
+    .select("*, members(name)")
+    .filter("giver_ids", "cs", `["${id}"]`) 
+    .order("created_at", { ascending: false });
+
   const [
     { data: member, error: memberError },
     { data: logs, error: logsError },
-  ] = await Promise.all([memberPromise, logsPromise]);
+    { data: witnessLogs, error: witnessLogsError }
+  ] = await Promise.all([memberPromise, logsPromise, witnessLogsPromise]);
 
-  if (memberError || logsError) {
-    console.error("Error fetching member details:", memberError || logsError);
-    return { member: null, logs: [], stats: null };
+  if (memberError) {
+    console.error("Error fetching member:", memberError);
+    return { member: null, logs: [], witnessLogs: [], stats: null, shotsGivenCount: 0 };
+  }
+  else if (logsError) {
+    console.error("Error fetching logs:", logsError);
+    return { member: null, logs: [], witnessLogs: [], stats: null, shotsGivenCount: 0 };
+  }
+  else if (witnessLogsError) {
+    console.error("Error fetching witness logs:", witnessLogsError);
   }
 
   // --- Logik för att beräkna statistik ---
-  const stats = logs.reduce(
+  const stats = (logs || []).reduce(
     (acc, log) => {
       const isKex = log.group_type_at_log_time === "Kex";
       const isEss = log.group_type_at_log_time === "ESS";
 
       if (log.change > 0) {
-        // Någon har gett ett straff
         acc.totalGiven += log.change;
         if (isKex) acc.givenAsKex += log.change;
         if (isEss) acc.givenAsEss += log.change;
@@ -42,12 +57,10 @@ async function getMemberDetails(id: string) {
           acc.biggestSingleAddition = log.change;
         }
       } else {
-        // Medlemmen har tagit bort/druckit shots
         acc.totalRemoved += Math.abs(log.change);
         if (isKex) acc.removedAsKex += Math.abs(log.change);
         if (isEss) acc.removedAsEss += Math.abs(log.change);
       }
-
       return acc;
     },
     {
@@ -58,11 +71,18 @@ async function getMemberDetails(id: string) {
       removedAsKex: 0,
       removedAsEss: 0,
       biggestSingleAddition: 0,
-      totalLogs: logs.length,
     }
   );
 
-  return { member, logs: logs as ShotLog[], stats };
+  const shotsGivenCount = (witnessLogs || []).reduce((sum, log) => sum + log.change, 0);
+
+  return { 
+    member, 
+    logs: (logs || []) as ShotLog[], 
+    witnessLogs: (witnessLogs || []) as ShotLog[],
+    stats, 
+    shotsGivenCount
+  };
 }
 
 // --- Komponenter för att visa statistik ---
@@ -90,7 +110,7 @@ function StatCard({
 
 export default async function MemberDetailPage({ params }: { params: any }) {
   const { id } = params;
-  const { member, logs, stats } = await getMemberDetails(id);
+  const { member, logs, witnessLogs, stats, shotsGivenCount } = await getMemberDetails(id);
 
   if (!member || !stats) {
     return (
@@ -108,15 +128,17 @@ export default async function MemberDetailPage({ params }: { params: any }) {
     );
   }
 
+  const isEssOrJoker = member.group_type === "ESS" || member.group_type === "Joker";
+
   return (
-    <div>
-      {/* --- Header-sektion med namn --- */}
+    <div className="pb-20">
+      {/* --- Header --- */}
       <div className="text-center mb-10 border-b-2 border-amber-400/50 pb-6">
         <h1 className="text-6xl font-serif font-bold text-essex-gold drop-shadow-lg">
           {member.name}
         </h1>
-        <p className="text-2xl text-gray-300 mt-2">Statistiköversikt</p>
-        <div className="w-full/50 mt-4">
+        <p className="text-2xl text-gray-300 mt-2 font-serif italic">{member.group_type}</p>
+        <div className="mt-6">
           <BackButton />
         </div>
       </div>
@@ -124,7 +146,7 @@ export default async function MemberDetailPage({ params }: { params: any }) {
       {/* --- Övergripande Statistik --- */}
       <section className="mb-12">
         <h2 className="text-2xl font-serif text-center font-semibold mb-4 text-gray-200">
-          Övergripande
+          Karriärsöversikt
         </h2>
         <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6">
           <StatCard
@@ -133,61 +155,94 @@ export default async function MemberDetailPage({ params }: { params: any }) {
             colorClass="text-essex-red"
           />
           <StatCard
-            title="Största enskilda straff"
-            value={stats.biggestSingleAddition}
-          />
-          <StatCard
             title="Totalt avklarade"
             value={stats.totalRemoved}
-            colorClass="text-green-600"
+            colorClass="text-green-500"
           />
+          {/* Visa endast 'Utdelade' för ESS/Joker */}
+          {isEssOrJoker ? (
+            <StatCard
+              title="Utdelade Shots"
+              value={shotsGivenCount}
+              colorClass="text-amber-400"
+            />
+          ) : (
+            <StatCard
+              title="Största straff (Mottaget)"
+              value={stats.biggestSingleAddition}
+              colorClass="text-gray-200"
+            />
+          )}
         </div>
       </section>
 
-      {/* --- Shots Tilldelade (Kex vs ESS) --- */}
-      <section className="mb-12">
-        <h2 className="text-2xl font-serif text-center font-semibold mb-4 text-gray-200">
-          Shots Mottagna
-        </h2>
-        <div className="max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <StatCard
-            title="Som KEX"
-            value={stats.givenAsKex}
-            colorClass="text-red-500"
-          />
-          <StatCard
-            title="Som ESS"
-            value={stats.givenAsEss}
-            colorClass="text-red-500"
-          />
+      {/* --- Shots Mottagna & Avklarade (Detaljer) --- */}
+      <section className="mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {/* Mottagna */}
+          <div className="bg-gray-800/40 p-6 rounded-xl border border-gray-700">
+            <h3 className="text-xl font-bold text-center text-red-400 mb-4">Mottagna Shots</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <span className="block text-3xl font-bold text-white">{stats.givenAsKex}</span>
+                <span className="text-xs text-gray-400 uppercase">Som KEX</span>
+              </div>
+              <div className="text-center">
+                <span className="block text-3xl font-bold text-white">{stats.givenAsEss}</span>
+                <span className="text-xs text-gray-400 uppercase">Som ESS</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Avklarade */}
+          <div className="bg-gray-800/40 p-6 rounded-xl border border-gray-700">
+            <h3 className="text-xl font-bold text-center text-green-400 mb-4">Druckna Shots</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <span className="block text-3xl font-bold text-white">{stats.removedAsKex}</span>
+                <span className="text-xs text-gray-400 uppercase">Som KEX</span>
+              </div>
+              <div className="text-center">
+                <span className="block text-3xl font-bold text-white">{stats.removedAsEss}</span>
+                <span className="text-xs text-gray-400 uppercase">Som ESS</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* --- Avklarade Shots (Kex vs ESS) --- */}
-      <section>
-        <h2 className="text-2xl font-serif text-center font-semibold mb-4 text-gray-200">
-          Avklarade Shots
-        </h2>
-        <div className="max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <StatCard
-            title="Som KEX"
-            value={stats.removedAsKex}
-            colorClass="text-green-600"
-          />
-          <StatCard
-            title="Som ESS"
-            value={stats.removedAsEss}
-            colorClass="text-green-600"
-          />
+      {/* --- TABELLER --- */}
+      <div 
+        className={`
+          mt-8 w-full
+          ${isEssOrJoker 
+            ? "grid grid-cols-1 xl:grid-cols-2 gap-8" 
+            : "flex justify-center" 
+          }
+        `}
+      >
+        
+        {/* Vänster: Personlig Logg (Mottagna) */}
+        <div className={`
+          bg-card-white text-gray-800 rounded-xl shadow-lg p-4 md:p-6 border border-gray-200/10 w-full
+          ${!isEssOrJoker ? "max-w-4xl" : ""}
+        `}>
+          <h2 className="text-2xl font-bold mb-4 text-gray-200 border-b border-gray-600 pb-2">
+            Händelselogg (Mottaget)
+          </h2>
+          <PaginatedLogTable logs={logs} />
         </div>
-      </section>
 
-      {/* --- Detaljerad händelselogg för medlemmen (nu responsiv) --- */}
-      <div className="mt-16 bg-card-white text-gray-800 rounded-xl shadow-lg p-4 md:p-6">
-        <h2 className="text-2xl font-bold mb-4 text-gray-200">
-          Personlig Händelselogg
-        </h2>
-        <PaginatedLogTable logs={logs} />
+        {/* Höger: Vittneslogg (Endast ESS/Joker) */}
+        {isEssOrJoker && (
+          <div className="bg-card-white text-gray-800 rounded-xl shadow-lg p-4 md:p-6 border border-amber-500/20 w-full">
+            <h2 className="text-2xl font-bold mb-4 text-amber-400 border-b border-amber-500/30 pb-2">
+              Domarprotokoll (Utdelat)
+            </h2>
+            <WitnessLogTable logs={witnessLogs} />
+          </div>
+        )}
+
       </div>
     </div>
   );

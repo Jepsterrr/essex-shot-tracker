@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 const ITEMS_PER_PAGE = 25;
 
-async function getHistory(currentPage: number, query: string | undefined) {
+async function getHistory(currentPage: number, query: string | undefined, logId: string | undefined) {
   const from = (currentPage - 1) * ITEMS_PER_PAGE;
   const to = from + ITEMS_PER_PAGE - 1;
 
@@ -20,7 +20,10 @@ async function getHistory(currentPage: number, query: string | undefined) {
     { count: "exact" }
   );
 
-  if (query) {
+  if (logId) {
+    supabaseQuery = supabaseQuery.eq("id", logId);
+  }
+  else if (query) {
     const { data: matchingMembers } = await supabase
       .from("members")
       .select("id")
@@ -57,7 +60,8 @@ export default async function HistoryPage({
 }) {
   const currentPage = Number(searchParams.page) || 1;
   const searchQuery = searchParams.query;
-  const { history, totalCount } = await getHistory(currentPage, searchQuery);
+  const logId = searchParams.logId;
+  const { history, totalCount } = await getHistory(currentPage, searchQuery, logId);
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   return (
@@ -70,10 +74,22 @@ export default async function HistoryPage({
           Historik över alla registrerade shots.
         </p>
 
-        {/* Sökfältet */}
-        <div className="mb-6">
-          <SearchBar placeholder="Sök på namn eller anledning..." />
-        </div>
+        {logId && (
+          <div className="mb-6">
+            <Link 
+              href="/historik"
+              className="inline-block bg-gray-600/40 text-gray-300 font-bold py-2 px-5 rounded-lg hover:bg-gray-600/70 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
+            >
+              ← Visa hela listan
+            </Link>
+          </div>
+        )}
+
+        {!logId && (
+          <div className="mb-6">
+            <SearchBar placeholder="Sök på namn eller anledning..." />
+          </div>
+        )}
 
         <div className="border-t border-gray-400 pt-6">
           {history.length === 0 ? (
