@@ -56,11 +56,14 @@ async function getHistory(currentPage: number, query: string | undefined, logId:
 export default async function HistoryPage({
   searchParams,
 }: {
-  searchParams: any;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const currentPage = Number(searchParams.page) || 1;
-  const searchQuery = searchParams.query;
-  const logId = searchParams.logId;
+  const resolvedParams = await searchParams;
+
+  const currentPage = Number(resolvedParams?.page) || 1;
+  const searchQuery = typeof resolvedParams?.query === 'string' ? resolvedParams.query : undefined;
+  const logId = typeof resolvedParams?.logId === 'string' ? resolvedParams.logId : undefined;
+
   const { history, totalCount } = await getHistory(currentPage, searchQuery, logId);
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
