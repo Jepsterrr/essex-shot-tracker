@@ -108,8 +108,8 @@ function StatCard({
 
 // --- Huvudkomponenten för sidan ---
 
-export default async function MemberDetailPage({ params }: { params: any }) {
-  const { id } = params;
+export default async function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { member, logs, witnessLogs, stats, shotsGivenCount } = await getMemberDetails(id);
 
   if (!member || !stats) {

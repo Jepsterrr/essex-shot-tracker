@@ -74,10 +74,20 @@ function ListControls({
 }: {
   paramKey: string;
   currentLimit: number;
-  searchParams: any;
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
+  
   const createUrl = (newLimit: number) => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams();
+    
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        params.set(key, value);
+      } else if (Array.isArray(value)) {
+        value.forEach(v => params.append(key, v));
+      }
+    });
+
     params.set(paramKey, newLimit.toString());
     return `?${params.toString()}`;
   };
@@ -127,13 +137,15 @@ function ToplistCard({
 export default async function ToplistPage({
   searchParams,
 }: {
-  searchParams: any;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const awaitedParams = await searchParams;
+
   const limits: ToplistLimits = {
-    punishers: Number(searchParams.punisherLimit) || 5,
-    martyrs: Number(searchParams.martyrLimit) || 5,
-    hammers: Number(searchParams.hammerLimit) || 5,
-    consumers: Number(searchParams.consumerLimit) || 5,
+    punishers: Number(awaitedParams?.punisherLimit) || 5,
+    martyrs: Number(awaitedParams?.martyrLimit) || 5,
+    hammers: Number(awaitedParams?.hammerLimit) || 5,
+    consumers: Number(awaitedParams?.consumerLimit) || 5,
   };
 
   const { punishers, martyrs, hammers, consumers } = await getToplists(limits);
@@ -146,7 +158,7 @@ export default async function ToplistPage({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
 
         {/* THE PUNISHER */}
-        <ToplistCard title="The Punisher" subtitle="Flest bevittnade shots">
+        <ToplistCard title="The Punisher" subtitle="Flest utdelade shots">
           {punishers.length > 0 ? (
             punishers.map((p, i) => (
               <Link 
@@ -170,7 +182,7 @@ export default async function ToplistPage({
           <ListControls
             paramKey="punisherLimit"
             currentLimit={limits.punishers}
-            searchParams={searchParams}
+            searchParams={awaitedParams}
           />
         </ToplistCard>
 
@@ -199,7 +211,7 @@ export default async function ToplistPage({
           <ListControls
             paramKey="martyrLimit"
             currentLimit={limits.martyrs}
-            searchParams={searchParams}
+            searchParams={awaitedParams}
           />
         </ToplistCard>
 
@@ -235,7 +247,7 @@ export default async function ToplistPage({
           <ListControls
             paramKey="hammerLimit"
             currentLimit={limits.hammers}
-            searchParams={searchParams}
+            searchParams={awaitedParams}
           />
         </ToplistCard>
 
@@ -264,7 +276,7 @@ export default async function ToplistPage({
           <ListControls
             paramKey="consumerLimit"
             currentLimit={limits.consumers}
-            searchParams={searchParams}
+            searchParams={awaitedParams}
           />
         </ToplistCard>
       </div>
