@@ -19,7 +19,8 @@ export const sessionOptions: SessionOptions = {
 };
 
 // En hjälpfunktion för att enkelt hämta sessionen i server-komponenter och routes
-export function getSession(): Promise<IronSession<SessionData>> {
-  const session = getIronSession<SessionData>(cookies() as any, sessionOptions);
+export async function getSession(): Promise<IronSession<SessionData>> {
+  const cookieStore = await cookies();
+  const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
   return session;
 }

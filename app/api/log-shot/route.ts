@@ -36,8 +36,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const { data: latestLog } = await supabaseAdmin
+      .from("shot_log")
+      .select("id")
+      .eq("member_id", member_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
     return NextResponse.json(
-      { message: "Shot log created successfully" },
+      { success: true, logId: latestLog?.id },
       { status: 200 }
     );
   } catch (err) {

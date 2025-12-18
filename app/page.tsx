@@ -1,48 +1,49 @@
 "use client";
 
-import { useState, useEffect, FormEvent, useRef } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { supabase } from "@/lib/supabase-client";
-import type { Member } from "@/types/types";
-import type { Witness } from "@/types/types";
+import type { Member, Witness } from "@/types/types";
 import LoadingSkeleton from "./loading";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function HomePage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [allWitnessOptions, setAllWitnessOptions] = useState<Witness[]>([]);
-  const [selectedMemberId, setSelectedMemberId] = useState<string>("");
+  
+  // Array för massbestraffning
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  
   const [isLoadingData, setIsLoadingData] = useState(true);
+
+  // UI State
   const [changeType, setChangeType] = useState<"add" | "remove">("add");
   const [amount, setAmount] = useState<number | "">(1);
   const [reason, setReason] = useState<string>("");
   const [selectedWitnesses, setSelectedWitnesses] = useState<string[]>([]);
-  const [status, setStatus] = useState<{
-    message: string;
-    type: "success" | "error" | "";
-  }>({ message: "", type: "" });
   const [otherWitnessValue, setOtherWitnessValue] = useState("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        // Hämta medlemmar som kan få shots
         const { data: membersToReceiveShots } = await supabase
           .from("members")
           .select("*")
           .eq("is_active", true)
           .not("group_type", "eq", "Joker")
           .order("name");
-        if (membersToReceiveShots) setMembers(membersToReceiveShots);
+        
+        if (membersToReceiveShots) {
+          setMembers(membersToReceiveShots);
+        }
 
-        // Hämta medlemmar som kan vittna
         const { data: membersWhoCanWitness } = await supabase
           .from("members")
           .select("id, name, group_type")
           .eq("is_active", true)
           .in("group_type", ["ESS", "Joker"]);
 
-        // Hämta manuellt tillagda vittnen från 'witnesses'-tabellen
         const { data: witnessData } = await supabase
           .from("witnesses")
           .select("*")
@@ -52,10 +53,7 @@ export default function HomePage() {
           (m) => ({ id: m.id, name: m.name })
         );
 
-        // Slå ihop de manuella vittnena med de kvalificerade medlemmarna
         const combined = [...(witnessData || []), ...memberWitnesses];
-
-        // Ta bort eventuella dubbletter
         const uniqueWitnesses = Array.from(
           new Map(combined.map((item) => [item.name, item])).values()
         );
@@ -65,31 +63,16 @@ export default function HomePage() {
         );
       } catch (error) {
         console.error("Error fetching data:", error);
+        toast.error("Kunde inte hämta data");
       } finally {
-        // När all data är hämtad, stäng av laddning
         setIsLoadingData(false);
       }
     }
     fetchData();
   }, []);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [dropdownRef]);
-
   const resetForm = () => {
-    setSelectedMemberId("");
+    setSelectedMemberIds([]);
     setChangeType("add");
     setAmount(1);
     setReason("");
@@ -97,22 +80,31 @@ export default function HomePage() {
     setOtherWitnessValue("");
   };
 
+  // --- UNDO FUNKTION ---
+  const handleUndo = async (logIds: string[]) => {
+    const toastId = toast.loading("Ångrar...");
+    try {
+      await Promise.all(
+        logIds.map((id) =>
+          fetch(`/api/revert-shot?id=${id}`, { method: "DELETE" })
+        )
+      );
+      toast.success("Ångrat! Ingen skada skedd.", { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error("Kunde inte ångra allt.", { id: toastId });
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setStatus({ message: "", type: "" });
+    setIsSubmitting(true);
+    
     const numAmount = Number(amount);
 
-    if (!selectedMemberId || numAmount <= 0) {
-      setStatus({
-        message: "Välj en medlem och ange ett antal större än noll.",
-        type: "error",
-      });
-      return;
-    }
-
-    const selectedMember = members.find((m) => m.id === selectedMemberId);
-    if (!selectedMember) {
-      setStatus({ message: "Kunde inte hitta medlemsdata.", type: "error" });
+    if (selectedMemberIds.length === 0 || numAmount <= 0) {
+      toast.error("Välj minst en medlem och antal > 0");
+      setIsSubmitting(false);
       return;
     }
 
@@ -132,45 +124,89 @@ export default function HomePage() {
       giverIds.length === 0 &&
       !otherWitnessValue.trim()
     ) {
-      setStatus({
-        message:
-          'Minst ett vittne som är ESS/Joker eller ett "Annat vittne" måste anges för att dela ut straff.',
-        type: "error",
-      });
+      toast.error('Minst ett giltigt vittne krävs för straff.');
+      setIsSubmitting(false);
       return;
     }
 
     const changeAmount = changeType === "add" ? numAmount : -numAmount;
-
     const finalWitnesses = [...selectedWitnesses];
     if (otherWitnessValue.trim()) {
       finalWitnesses.push(`Övrig: ${otherWitnessValue.trim()}`);
     }
 
-    const res = await fetch("/api/log-shot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        member_id: selectedMemberId,
-        change: changeAmount,
-        reason,
-        witnesses: finalWitnesses,
-        group_type: selectedMember.group_type,
-        giver_ids: changeType === "add" ? giverIds : [],
-      }),
+    // --- MASSBESTRAFFNING LOGIK ---
+    const createdLogIds: string[] = [];
+    let errorCount = 0;
+
+    const promises = selectedMemberIds.map(async (memberId) => {
+        const selectedMember = members.find((m) => m.id === memberId);
+        if (!selectedMember) return;
+
+        const res = await fetch("/api/log-shot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            member_id: memberId,
+            change: changeAmount,
+            reason,
+            witnesses: finalWitnesses,
+            group_type: selectedMember.group_type,
+            giver_ids: changeType === "add" ? giverIds : [],
+          }),
+        });
+
+        if (!res.ok) {
+            errorCount++;
+        } else {
+            const data = await res.json();
+            if (data.logId) createdLogIds.push(data.logId);
+        }
     });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      setStatus({
-        message: `Något gick fel: ${errorData.error || res.statusText}`,
-        type: "error",
-      });
+    await Promise.all(promises);
+
+    setIsSubmitting(false);
+
+    if (errorCount > 0) {
+        toast.error(`Lyckades med ${createdLogIds.length}, misslyckades med ${errorCount}.`);
     } else {
-      setStatus({ message: "Shots loggade!", type: "success" });
-      resetForm();
-      setTimeout(() => setStatus({ message: "", type: "" }), 4000);
+        resetForm();
+        
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+            navigator.vibrate([50, 50, 50]);
+        }
+
+        toast((t) => (
+            <div className="flex items-center gap-4">
+                <span>
+                    {changeType === "add" ? "Domarklubban har talat! ⚖️" : "Skål! 🍻"}
+                </span>
+                <button
+                    onClick={() => {
+                        toast.dismiss(t.id);
+                        handleUndo(createdLogIds);
+                    }}
+                    className="bg-red-600 text-white px-3 py-1 rounded text-sm font-bold border border-red-400 hover:bg-red-500"
+                >
+                    ÅNGRA
+                </button>
+            </div>
+        ), {
+            duration: 4000,
+            style: {
+                background: '#333',
+                color: '#fff',
+                border: '1px solid #d4af37',
+            }
+        });
     }
+  };
+
+  const toggleMember = (id: string) => {
+    setSelectedMemberIds((prev) => 
+        prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
+    );
   };
 
   const handleWitnessChange = (memberName: string) => {
@@ -183,6 +219,7 @@ export default function HomePage() {
 
   const incrementAmount = () => {
     setAmount((prev) => (typeof prev === "number" ? prev + 1 : 1));
+    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(10);
   };
   
   const decrementAmount = () => {
@@ -190,127 +227,112 @@ export default function HomePage() {
       if (typeof prev !== "number") return 1;
       return prev > 1 ? prev - 1 : 1;
     });
+    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(10);
   };
 
-  const selectedMemberName =
-    members.find((m) => m.id === selectedMemberId)?.name || "Välj en medlem...";
+  if (isLoadingData) return <LoadingSkeleton />;
 
   const isAddMode = changeType === "add";
 
-  if (isLoadingData) {
-    return <LoadingSkeleton />;
-  }
-
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto pb-20">
+      <Toaster position="bottom-center" />
+      
       <h1 className="text-5xl font-serif font-bold text-center mb-8 text-essex-gold drop-shadow-lg">
         Shot-Protokoll
       </h1>
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 bg-card-white text-gray-200 p-8 rounded-xl shadow-2xl border border-gray-200/10"
+        className="space-y-8 bg-card-white text-gray-200 p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-200/10"
       >
-        {/* --- VÄLJ MEDLEM --- */}
+        {/* --- VÄLJ MEDLEM (GRID) --- */}
         <div>
-          <label className="block text-lg font-semibold mb-3 text-gray-200">
-            Vem gäller det?
+          <label className="text-lg font-semibold mb-3 text-gray-200 flex justify-between">
+            <span>Vem gäller det? {selectedMemberIds.length > 0 && <span className={isAddMode ? "text-red-400" : "text-green-400"}>({selectedMemberIds.length} valda)</span>}</span>
           </label>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`
-                w-full p-4 text-xl font-bold text-left grid grid-cols-[1fr_auto] items-center gap-4 rounded-xl border-2 transition-all duration-200
-                ${isDropdownOpen ? "border-amber-300/80 shadow-lg bg-gray-700" : "bg-gray-600/50 border-gray-500 hover:bg-gray-600"}
-              `}
-            >
-              <span className="truncate">{selectedMemberName}</span>
-              <svg
-                className={`w-6 h-6 transition-transform duration-200 ${isDropdownOpen ? "rotate-180 text-amber-300/80" : "text-gray-400"}`}
-                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-              </svg>
-            </button>
-
-            {isDropdownOpen && (
-              <ul className="absolute z-50 w-full mt-2 max-h-80 overflow-auto bg-gray-800 rounded-xl border-2 border-amber-300/80 shadow-2xl">
-                {members.map((member) => (
-                  <li
-                    key={member.id}
-                    onClick={() => {
-                      setSelectedMemberId(member.id);
-                      setIsDropdownOpen(false);
-                    }}
-                    className="p-4 text-white text-lg font-medium cursor-pointer hover:bg-gray-600 border-b border-gray-700 last:border-0"
-                  >
-                    {member.name}
-                  </li>
-                ))}
-              </ul>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-1">
+            {members.map((member) => {
+                const isSelected = selectedMemberIds.includes(member.id);
+                return (
+                    <button
+                        key={member.id}
+                        type="button"
+                        onClick={() => toggleMember(member.id)}
+                        className={`
+                            py-4 px-2 rounded-lg text-sm font-bold transition-all duration-150 border shadow-md
+                            ${isSelected 
+                                ? (isAddMode 
+                                    ? "bg-red-700 text-white border-red-500 shadow-[0_0_10px_rgba(220,38,38,0.5)] transform scale-[0.98]" 
+                                    : "bg-green-600 text-white border-green-500 shadow-[0_0_10px_rgba(22,163,74,0.5)] transform scale-[0.98]")
+                                : "bg-gray-700/50 text-gray-white border-gray-600 hover:bg-gray-600"}
+                        `}
+                    >
+                        {member.name}
+                        {isSelected && " ✓"}
+                    </button>
+                )
+            })}
+            {members.length === 0 && (
+                <p className="col-span-full text-center text-gray-500 py-4">Inga medlemmar hittades</p>
             )}
           </div>
         </div>
 
         {/* --- LÄGE & ANTAL --- */}
         <div className="space-y-4">
-          
-          {/* Toggle Switch */}
           <div className="grid grid-cols-2 bg-gray-900 p-1 rounded-xl border border-gray-600">
             <button
               type="button"
               onClick={() => setChangeType("add")}
               className={`py-4 text-lg font-bold rounded-lg transition-all duration-300 ${
                 isAddMode
-                  ? "bg-red-700/50 text-white shadow-lg scale-100"
+                  ? "bg-red-700/80 text-white shadow-lg scale-100 ring-2 ring-red-500/50"
                   : "text-gray-400 hover:text-gray-200"
               }`}
             >
-              LÄGG TILL
+              GE SKULD
             </button>
             <button
               type="button"
               onClick={() => setChangeType("remove")}
               className={`py-4 text-lg font-bold rounded-lg transition-all duration-300 ${
                 !isAddMode
-                  ? "bg-green-600/70 text-white shadow-lg scale-100"
+                  ? "bg-green-600/80 text-white shadow-lg scale-100 ring-2 ring-green-500/50"
                   : "text-gray-400 hover:text-gray-200"
               }`}
             >
-              TA BORT
+              DRICKA
             </button>
           </div>
 
-          {/* Stepper med Input */}
           <div className="flex items-center justify-between bg-gray-600/30 p-2 rounded-xl border border-gray-600">
             <button
               type="button"
               onClick={decrementAmount}
-              className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-3xl font-bold transition-colors active:bg-gray-800"
+              className={`w-16 h-16 flex-shrink-0 flex items-center justify-center bg-gray-700 text-white rounded-lg text-3xl font-bold transition-colors active:bg-gray-800 ${isAddMode ? 'hover:bg-red-900/40' : 'hover:bg-green-900/40'}`}
             >
               −
             </button>
-            
             <div className="flex flex-col items-center flex-grow px-4">
-              <span className="text-sm text-gray-200 uppercase tracking-widest font-bold mb-1">Antal</span>
+              <span className="text-sm text-gray-400 uppercase tracking-widest font-bold mb-1">Antal</span>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value === "" ? "" : Number(e.target.value))}
                 className={`
                   w-full bg-transparent text-center text-5xl font-bold border-none focus:ring-0 p-0 no-spinner
-                  ${isAddMode ? 'text-essex-red placeholder-red-800' : 'text-green-500 placeholder-green-800'}
+                  ${isAddMode ? 'text-essex-red placeholder-red-800/50' : 'text-green-500 placeholder-green-800/50'}
                 `}
                 placeholder="0"
                 min="1"
               />
             </div>
-
             <button
               type="button"
               onClick={incrementAmount}
-              className="w-16 h-16 flex-shrink-0 flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-3xl font-bold transition-colors active:bg-gray-800"
+              className={`w-16 h-16 flex-shrink-0 flex items-center justify-center bg-gray-700 text-white rounded-lg text-3xl font-bold transition-colors active:bg-gray-800 ${isAddMode ? 'hover:bg-red-900/40' : 'hover:bg-green-900/40'}`}
             >
               +
             </button>
@@ -333,7 +355,9 @@ export default function HomePage() {
                   className={`
                     flex-grow md:flex-grow-0 py-3 px-4 rounded-lg font-semibold text-base transition-all duration-200 border
                     ${isSelected 
-                      ? "bg-red-700/50 text-white border-amber-400 shadow-[0_0_10px_rgba(212,175,55,0.5)]" 
+                      ? (isAddMode
+                          ? "bg-red-700/80 text-white border-red-500 shadow-[0_0_10px_rgba(220,38,38,0.5)] transform scale-105"
+                          : "bg-green-600/80 text-white border-green-500 shadow-[0_0_10px_rgba(22,163,74,0.5)] transform scale-105")
                       : "bg-gray-700/50 text-gray-300 border-gray-600 hover:bg-gray-600"}
                   `}
                 >
@@ -344,15 +368,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* --- ÖVRIGT VITTNE --- */}
         <div>
           <input
             type="text"
-            id="otherWitness"
             placeholder="+ Annat vittne (namn)"
             value={otherWitnessValue}
             onChange={(e) => setOtherWitnessValue(e.target.value)}
-            className="form-input w-full bg-gray-800/50 border border-gray-600 rounded-lg p-4 text-lg text-white placeholder-gray-500 focus:border-essex-gold focus:ring-1 focus:ring-essex-gold transition-all"
+            className={`form-input w-full bg-gray-800/50 border rounded-lg p-4 text-lg text-white placeholder-gray-500 transition-all ${isAddMode ? 'focus:border-red-500 focus:ring-1 focus:ring-red-500 border-gray-600' : 'focus:border-green-500 focus:ring-1 focus:ring-green-500 border-gray-600'}`}
           />
         </div>
 
@@ -362,12 +384,11 @@ export default function HomePage() {
             Anledning
           </label>
           <textarea
-            id="reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={2}
             placeholder="Varför?"
-            className="form-input w-full bg-gray-800/50 border border-gray-600 rounded-lg p-4 text-lg text-white placeholder-gray-500 focus:border-essex-gold focus:ring-1 focus:ring-essex-gold transition-all"
+            className={`form-input w-full bg-gray-800/50 border rounded-lg p-4 text-lg text-white placeholder-gray-500 transition-all ${isAddMode ? 'focus:border-red-500 focus:ring-1 focus:ring-red-500 border-gray-600' : 'focus:border-green-500 focus:ring-1 focus:ring-green-500 border-gray-600'}`}
           ></textarea>
         </div>
 
@@ -375,31 +396,29 @@ export default function HomePage() {
         <div className="pt-4">
           <button
             type="submit"
+            disabled={isSubmitting}
             className={`
               w-full text-white font-serif tracking-wider font-bold py-4 rounded-xl border-b-4 transition-all duration-200 transform active:scale-[0.98] active:border-b-0 active:translate-y-1 flex flex-col items-center justify-center
+              ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}
               ${isAddMode 
                 ? "bg-red-700/50 border-red-900 hover:bg-red-700 shadow-red-900/30 shadow-lg" 
                 : "bg-green-600/70 border-green-900 hover:bg-green-500 shadow-green-900/30 shadow-lg"}
             `}
           >
-            <span className="text-2xl">♣ Registrera ♥</span>
-            <span className="text-lg font-sans font-normal opacity-90 mt-1">
-              {isAddMode ? "(Ge Straff)" : "(SKÅL!)"}
-            </span>
+            {isSubmitting ? (
+              <span className="text-2xl animate-pulse">Registrerar...</span>
+            ) : (
+                <>
+                    <span className="text-2xl">
+                        {selectedMemberIds.length > 1 ? "👨‍👩‍👦‍👦 Massbestraffning!" : "♣ Registrera Händelse ♥"}
+                    </span>
+                    <span className="text-lg font-sans font-normal opacity-90 mt-1">
+                        {isAddMode ? "(Ge Straff)" : "(SKÅL!)"}
+                    </span>
+                </>
+            )}
           </button>
         </div>
-
-        {status.message && (
-          <div
-            className={`text-center p-4 rounded-xl mt-4 font-bold text-lg border-2 animate-pulse ${
-              status.type === "success"
-                ? "bg-green-900/30 border-green-500 text-green-400"
-                : "bg-red-900/30 border-red-500 text-red-400"
-            }`}
-          >
-            {status.message}
-          </div>
-        )}
       </form>
     </div>
   );
