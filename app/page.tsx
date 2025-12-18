@@ -410,7 +410,7 @@ export default function HomePage() {
             ) : (
                 <>
                     <span className="text-2xl">
-                        {selectedMemberIds.length > 1 ? "♣ Massbestraffning! ♥" : "♣ Registrera Händelse ♥"}
+                        {selectedMemberIds.length > 1 ? "♣ Massbestraffning ♥" : "♣ Registrera ♥"}
                     </span>
                     <span className="text-lg font-sans font-normal opacity-90 mt-1">
                         {isAddMode ? "(Ge Straff)" : "(SKÅL!)"}
