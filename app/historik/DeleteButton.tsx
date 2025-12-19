@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 interface DeleteButtonProps {
     logId: string;
@@ -26,12 +27,21 @@ export default function DeleteButton({ logId, memberName, change }: DeleteButton
 
             if (!res.ok) {
                 const data = await res.json();
-                alert(`Kunde inte ta bort: ${data.error}`);
+                toast.error(`Kunde inte ta bort: ${data.error}`)
             } else {
+                const actionDescription = change > 0 ? "Straff borttaget" : "Drickning ångrad";
+                toast.success(`${actionDescription} för ${memberName}`, {
+                    style: {
+                        background: '#333',
+                        color: '#fff',
+                        border: '1px solid #d4af37',
+                    }
+                });
+
                 router.refresh();
             }
         } catch (error) {
-            alert("Ett fel uppstod.");
+            toast.error("Ett fel uppstod vid borttagning.");
         } finally {
             setIsDeleting(false);
         }

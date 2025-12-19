@@ -230,26 +230,39 @@ export default function HomePage() {
     if (errorCount > 0) {
         toast.error(`Lyckades med ${createdLogIds.length}, misslyckades med ${errorCount}.`);
     } else {
-        resetForm();
-        
-        if (typeof navigator !== "undefined" && navigator.vibrate) {
-            navigator.vibrate([50, 50, 50]);
+        const affectedMembers = members.filter(m => selectedMemberIds.includes(m.id));
+        let namesString = "";
+
+        if (affectedMembers.length === 1) {
+          namesString = affectedMembers[0].name;
+        } else if (affectedMembers.length === 2) {
+          namesString = `${affectedMembers[0].name} & ${affectedMembers[1].name}`;
+        } else {
+          namesString = `${affectedMembers.length} personer`;
         }
+
+        const toastMessage = changeType === "add"
+          ? `${amount} straff tilldelat ${namesString}`
+          : `Skål! ${namesString} drack ${amount}`;
+
+        resetForm();
 
         toast((t) => (
             <div className="flex items-center gap-4">
-                <span>
-                    {changeType === "add" ? "Domarklubban har talat! ⚖️" : "Skål! 🍻"}
+              <div className="flex flex-col">
+                <span className="font-bold">
+                  {toastMessage}
                 </span>
-                <button
-                    onClick={() => {
-                        toast.dismiss(t.id);
-                        handleUndo(createdLogIds);
-                    }}
-                    className="bg-red-600 text-white px-3 py-1 rounded text-sm font-bold border border-red-400 hover:bg-red-500"
-                >
-                    ÅNGRA
-                </button>
+              </div>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  handleUndo(createdLogIds);
+                }}
+                className="bg-red-600 text-white px-3 py-1 rounded text-sm font-bold border border-red-400 hover:bg-red-500"
+              >
+                ÅNGRA
+              </button>
             </div>
         ), {
             duration: 4000,
