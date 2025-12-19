@@ -3,6 +3,7 @@ import { Inter, EB_Garamond } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Navbar";
 import UsePwaInputFocusFix from "./components/UsePwaInputFocusFix";
+import OfflineSyncManager from "./components/OfflineSyncManager";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const ebGaramond = EB_Garamond({
@@ -44,6 +45,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${ebGaramond.variable} font-sans text-gray-100`}
       >
+        <OfflineSyncManager />
         <Header />
         <UsePwaInputFocusFix />
         <main className="container mx-auto p-4 md:p-8">{children}</main>

@@ -1,19 +1,19 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, use } from "react";
 import { supabase } from "@/lib/supabase-client";
 import type { Member, Witness } from "@/types/types";
 import LoadingSkeleton from "./loading";
 import toast, { Toaster } from "react-hot-toast";
+import { addToQueue, cacheData, getCachedData } from "@/lib/offline-queue";
 
 export default function HomePage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [allWitnessOptions, setAllWitnessOptions] = useState<Witness[]>([]);
   
-  // Array för massbestraffning
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
-  
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
 
   // UI State
   const [changeType, setChangeType] = useState<"add" | "remove">("add");
@@ -25,7 +25,35 @@ export default function HomePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    const handleStatusChange = () => {
+      setIsOfflineMode(!navigator.onLine);
+    };
+
+    if (typeof navigator !== "undefined") {
+      setIsOfflineMode(!navigator.onLine);
+    };
+
+    window.addEventListener('online', handleStatusChange);
+    window.addEventListener('offline', handleStatusChange)
+    return () => {
+        window.removeEventListener('online', handleStatusChange);
+        window.removeEventListener('offline', handleStatusChange);
+    }
+  }, []);
+
+  useEffect(() => {
     async function fetchData() {
+      const cached = getCachedData();
+      if (cached.members.length > 0) {
+        setMembers(cached.members);
+        setAllWitnessOptions(cached.witnesses);
+        setIsLoadingData(false);
+      }
+
+      if (!navigator.onLine) {
+        if (cached.members.length === 0) toast.error("Du är offline och ingen data finns sparad.")
+      }
+
       try {
         const { data: membersToReceiveShots } = await supabase
           .from("members")
@@ -49,6 +77,8 @@ export default function HomePage() {
           .select("*")
           .order("name");
 
+        const fetchedMembers = membersToReceiveShots || [];
+        
         const memberWitnesses: Witness[] = (membersWhoCanWitness || []).map(
           (m) => ({ id: m.id, name: m.name })
         );
@@ -57,10 +87,12 @@ export default function HomePage() {
         const uniqueWitnesses = Array.from(
           new Map(combined.map((item) => [item.name, item])).values()
         );
+        const sortedWitnesses = uniqueWitnesses.sort((a, b) => a.name.localeCompare(b.name));
 
-        setAllWitnessOptions(
-          uniqueWitnesses.sort((a, b) => a.name.localeCompare(b.name))
-        );
+        setMembers(fetchedMembers);
+        setAllWitnessOptions(sortedWitnesses)
+        cacheData(fetchedMembers, sortedWitnesses)
+
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Kunde inte hämta data");
@@ -80,7 +112,6 @@ export default function HomePage() {
     setOtherWitnessValue("");
   };
 
-  // --- UNDO FUNKTION ---
   const handleUndo = async (logIds: string[]) => {
     const toastId = toast.loading("Ångrar...");
     try {
@@ -135,9 +166,37 @@ export default function HomePage() {
       finalWitnesses.push(`Övrig: ${otherWitnessValue.trim()}`);
     }
 
-    // --- MASSBESTRAFFNING LOGIK ---
     const createdLogIds: string[] = [];
     let errorCount = 0;
+
+    if (!navigator.onLine) {
+      selectedMemberIds.forEach((memberId) => {
+        const selectedMember = members.find((m) => m.id === memberId)
+        if (!selectedMember) return
+
+        const payload = {
+          member_id: memberId,
+          change: changeAmount,
+          reason,
+          witnesses: finalWitnesses,
+          group_type: selectedMember.group_type,
+          giver_ids: changeType === "add" ? giverIds : [],
+        };
+
+        addToQueue(payload);
+      });
+
+      setIsSubmitting(false);
+      resetForm();
+      toast.success("Du är offline! Sparade straffen i kön. De skickas så fort du får nät igen.", {
+        duration: 4000,
+        style: {
+          background: '#333',
+          color: '#fff',
+          border: '1px solid #d4af37',
+        }
+      })
+    }
 
     const promises = selectedMemberIds.map(async (memberId) => {
         const selectedMember = members.find((m) => m.id === memberId);
