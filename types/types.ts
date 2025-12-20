@@ -4,6 +4,7 @@ export interface Member {
   current_shots: number;
   group_type: "Kex" | "ESS" | "Joker";
   created_at: string;
+  is_active: boolean;
 }
 
 export interface MemberWithStats extends Member {

@@ -9,7 +9,6 @@ export default function AdminWitnessesPage() {
   const [witnesses, setWitnesses] = useState<Witness[]>([]);
   const [newName, setNewName] = useState("");
   const [status, setStatus] = useState("");
-  const router = useRouter();
   const [editingWitnessId, setEditingWitnessId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
 
@@ -20,6 +19,45 @@ export default function AdminWitnessesPage() {
 
   useEffect(() => {
     fetchWitnesses();
+
+    // --- REALTIME SUBSCRIPTION ---
+    const channel = supabase
+      .channel("admin-witnesses-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "witnesses",
+        },
+        (payload) => {
+          setWitnesses((currentWitnesses) => {
+            let newList = [...currentWitnesses];
+            const eventType = payload.eventType;
+
+            if (eventType === "INSERT") {
+              const newWitness = payload.new as Witness;
+              if (!newList.find((w) => w.id === newWitness.id)) {
+                newList.push(newWitness);
+              }
+            } else if (eventType === "UPDATE") {
+              const updatedWitness = payload.new as Witness;
+              newList = newList.map((w) =>
+                w.id === updatedWitness.id ? updatedWitness : w
+              );
+            } else if (eventType === "DELETE") {
+              newList = newList.filter((w) => w.id !== payload.old.id);
+            }
+
+            return newList.sort((a, b) => a.name.localeCompare(b.name));
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleAddWitness = async (e: FormEvent) => {
@@ -52,8 +90,7 @@ export default function AdminWitnessesPage() {
       setNewName(originalName);
     } else {
       setStatus(`Vittne "${newWitnessOptimistic.name}" tillagt!`);
-      await fetchWitnesses();
-      router.refresh();
+      setWitnesses((prev) => prev.filter((w) => w.id !== tempId));
       setTimeout(() => setStatus(""), 3000);
     }
   };
@@ -67,8 +104,6 @@ export default function AdminWitnessesPage() {
       setStatus(`Kunde inte ta bort vittne: ${error}`);
     } else {
       setStatus(`Vittne "${name}" borttaget!`);
-      await fetchWitnesses();
-      router.refresh();
       setTimeout(() => setStatus(""), 3000);
     }
   };
@@ -97,8 +132,6 @@ export default function AdminWitnessesPage() {
       setStatus(`Namn uppdaterat!`);
       setEditingWitnessId(null);
       setEditingName("");
-      await fetchWitnesses();
-      router.refresh();
       setTimeout(() => setStatus(""), 3000);
     }
   };

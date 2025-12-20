@@ -55,12 +55,58 @@ export default function AdminMembersPage() {
   useEffect(() => {
     fetchActiveMembers();
     fetchArchivedMembers();
-  }, []);
 
-  const refreshAllData = async () => {
-    await Promise.all([fetchActiveMembers(), fetchArchivedMembers()]);
-    router.refresh();
-  };
+    // --- REALTIME SUBSCRIPTION ---
+    const channel = supabase
+      .channel("admin-members-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "members",
+        },
+        (payload) => {
+
+          const handleListUpdate = (
+            currentList: Member[],
+            isActiveList: boolean
+          ) => {
+            let newList = [...currentList];
+            const eventType = payload.eventType;
+
+            if (eventType === "INSERT") {
+              const newMember = payload.new as Member;
+              if (newMember.is_active === isActiveList) {
+                if (!newList.find((m) => m.id === newMember.id)) {
+                  newList.push(newMember);
+                }
+              }
+            } else if (eventType === "UPDATE") {
+              const updatedMember = payload.new as Member;
+
+              newList = newList.filter((m) => m.id !== updatedMember.id);
+
+              if (updatedMember.is_active === isActiveList) {
+                newList.push(updatedMember);
+              }
+            } else if (eventType === "DELETE") {
+              newList = newList.filter((m) => m.id !== payload.old.id);
+            }
+
+            return newList.sort((a, b) => a.name.localeCompare(b.name));
+          };
+
+          setActiveMembers((prev) => handleListUpdate(prev, true));
+          setArchivedMembers((prev) => handleListUpdate(prev, false));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // --- Funktioner för att hantera medlemmar ---
   const handleAddMember = async (e: FormEvent) => {
@@ -101,7 +147,8 @@ export default function AdminMembersPage() {
       setNewName(originalName);
     } else {
       setStatus(`Medlem "${newMemberOptimistic.name}" tillagd!`);
-      await refreshAllData();
+      setActiveMembers((prev) => prev.filter((m) => m.id !== tempId));
+      setTimeout(() => setStatus(""), 3000);
     }
   };
 
@@ -114,7 +161,7 @@ export default function AdminMembersPage() {
     });
     if (res.ok) {
       setStatus(`Medlem "${name}" har arkiverats!`);
-      await refreshAllData();
+      setTimeout(() => setStatus(""), 3000);
     } else {
       const { error } = await res.json();
       setStatus(`Kunde inte arkivera medlem: ${error}`);
@@ -129,7 +176,7 @@ export default function AdminMembersPage() {
     });
     if (res.ok) {
       setStatus(`Medlem "${name}" har återaktiverats!`);
-      await refreshAllData();
+      setTimeout(() => setStatus(""), 3000);
     } else {
       const { error } = await res.json();
       setStatus(`Kunde inte återaktivera medlem: ${error}`);
@@ -142,8 +189,7 @@ export default function AdminMembersPage() {
     const res = await fetch(`/api/members?id=${id}`, { method: "DELETE" });
     if (res.ok) {
       setStatus(`Medlem "${name}" har raderats permanent.`);
-      await fetchArchivedMembers();
-      router.refresh();
+      setTimeout(() => setStatus(""), 3000);
     } else {
       const { error } = await res.json();
       setStatus(`Kunde inte radera medlem: ${error}`);
@@ -172,11 +218,11 @@ export default function AdminMembersPage() {
     if (res.ok) {
       setStatus("Namn uppdaterat!");
       setEditingMemberId(null);
-      await fetchActiveMembers();
-      router.refresh();
+      setTimeout(() => setStatus(""), 3000);
     } else {
       const { error } = await res.json();
       setStatus(`Kunde inte uppdatera: ${error}`);
+      setTimeout(() => setStatus(""), 3000);
     }
   };
 
@@ -193,7 +239,6 @@ export default function AdminMembersPage() {
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
         }
-        // Standard sortering är efter grupp och sedan namn
         if (
           groupOrder[a.group_type as GroupType] !==
           groupOrder[b.group_type as GroupType]
