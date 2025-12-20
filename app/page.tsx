@@ -60,18 +60,11 @@ export default function HomePage() {
       }
 
       try {
-        const { data: membersToReceiveShots } = await supabase
+        const { data: allActiveMembers } = await supabase
           .from("members")
           .select("*")
           .eq("is_active", true)
-          .not("group_type", "eq", "Joker")
           .order("name");
-
-        const { data: membersWhoCanWitness } = await supabase
-          .from("members")
-          .select("id, name, group_type")
-          .eq("is_active", true)
-          .in("group_type", ["ESS", "Joker"]);
 
         const { data: witnessData } = await supabase
           .from("witnesses")
@@ -80,11 +73,16 @@ export default function HomePage() {
 
         if (!isMounted) return;
 
-        const fetchedMembers = membersToReceiveShots || [];
+        const fetchedMembers = allActiveMembers || [];
 
-        const memberWitnesses: Witness[] = (membersWhoCanWitness || []).map(
-          (m) => ({ id: m.id, name: m.name })
+        const membersWhoCanWitness = fetchedMembers.filter((m) =>
+          ["ESS", "Joker"].includes(m.group_type)
         );
+
+        const memberWitnesses: Witness[] = membersWhoCanWitness.map((m) => ({
+          id: m.id,
+          name: m.name,
+        }));
 
         const combined = [...(witnessData || []), ...memberWitnesses];
         const uniqueWitnesses = Array.from(
@@ -123,7 +121,7 @@ export default function HomePage() {
 
             if (eventType === "INSERT") {
               const newMember = payload.new as Member;
-              if (newMember.is_active && newMember.group_type !== "Joker") {
+              if (newMember.is_active) {
                 if (!newMemberList.find((m) => m.id === newMember.id)) {
                   newMemberList.push(newMember);
                   newMemberList.sort((a, b) => a.name.localeCompare(b.name));
@@ -131,10 +129,7 @@ export default function HomePage() {
               }
             } else if (eventType === "UPDATE") {
               const updatedMember = payload.new as Member;
-              if (
-                !updatedMember.is_active ||
-                updatedMember.group_type === "Joker"
-              ) {
+              if (!updatedMember.is_active) {
                 newMemberList = newMemberList.filter(
                   (m) => m.id !== updatedMember.id
                 );
@@ -223,10 +218,13 @@ export default function HomePage() {
           fetch(`/api/revert-shot?id=${id}`, { method: "DELETE" })
         )
       );
-      toast.success("Ångrat! Ingen skada skedd.", { id: toastId });
+      toast.success("Ångrat! Ingen skada skedd.", {
+        id: toastId,
+        duration: 4000,
+      });
     } catch (error) {
       console.error(error);
-      toast.error("Kunde inte ångra allt.", { id: toastId });
+      toast.error("Kunde inte ångra allt.", { id: toastId, duration: 4000 });
     }
   };
 
@@ -242,14 +240,22 @@ export default function HomePage() {
       return;
     }
 
-    const giverIds = selectedWitnesses
-      .map((witnessName) => {
-        const member = members.find(
-          (m) =>
-            m.name === witnessName &&
-            (m.group_type === "ESS" || m.group_type === "Joker")
-        );
-        return member ? member.id : null;
+    const selectedWitnessObjects = allWitnessOptions.filter((w) =>
+      selectedWitnesses.includes(w.id)
+    );
+
+    const witnessNames = selectedWitnessObjects.map((w) => w.name);
+
+    const giverIds = selectedWitnessObjects
+      .map((w) => {
+        const member = members.find((m) => m.id === w.id);
+        if (
+          member &&
+          (member.group_type === "ESS" || member.group_type === "Joker")
+        ) {
+          return member.id;
+        }
+        return null;
       })
       .filter((id): id is string => id !== null);
 
@@ -264,13 +270,14 @@ export default function HomePage() {
     }
 
     const changeAmount = changeType === "add" ? numAmount : -numAmount;
-    const finalWitnesses = [...selectedWitnesses];
+    const finalWitnesses = [...witnessNames];
     if (otherWitnessValue.trim()) {
       finalWitnesses.push(`Övrig: ${otherWitnessValue.trim()}`);
     }
 
     const createdLogIds: string[] = [];
     let errorCount = 0;
+    let queuedCount = 0;
 
     if (!navigator.onLine) {
       selectedMemberIds.forEach((memberId) => {
@@ -302,30 +309,49 @@ export default function HomePage() {
           },
         }
       );
+      return;
     }
 
     const promises = selectedMemberIds.map(async (memberId) => {
       const selectedMember = members.find((m) => m.id === memberId);
       if (!selectedMember) return;
 
-      const res = await fetch("/api/log-shot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          member_id: memberId,
-          change: changeAmount,
-          reason,
-          witnesses: finalWitnesses,
-          group_type: selectedMember.group_type,
-          giver_ids: changeType === "add" ? giverIds : [],
-        }),
-      });
+      const payload = {
+        member_id: memberId,
+        change: changeAmount,
+        reason,
+        witnesses: finalWitnesses,
+        group_type: selectedMember.group_type,
+        giver_ids: changeType === "add" ? giverIds : [],
+      };
 
-      if (!res.ok) {
+      let response;
+
+      try {
+        response = await fetch("/api/log-shot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } catch (err) {
+        console.error("Nätverksfel (fetch throw):", err);
+        addToQueue(payload);
+        queuedCount++;
+        return;
+      }
+
+      if (!response.ok) {
+        console.error("Serverfel status:", response.status);
         errorCount++;
-      } else {
-        const data = await res.json();
+        return;
+      }
+
+      try {
+        const data = await response.json();
         if (data.logId) createdLogIds.push(data.logId);
+      } catch (jsonError) {
+        console.error("Kunde inte tolka JSON-svar:", jsonError);
+        errorCount++;
       }
     });
 
@@ -335,7 +361,23 @@ export default function HomePage() {
 
     if (errorCount > 0) {
       toast.error(
-        `Lyckades med ${createdLogIds.length}, misslyckades med ${errorCount}.`
+        `Lyckades med ${createdLogIds.length}, Köade: ${queuedCount}, Misslyckades: ${errorCount}`,
+        {
+          duration: 4000,
+        }
+      );
+    } else if (queuedCount > 0 && createdLogIds.length) {
+      resetForm();
+      toast.success("Nätverket svajade! Sparade allt i offline-kön.", {
+        duration: 4000,
+      });
+    } else if (queuedCount > 0) {
+      resetForm();
+      toast.success(
+        `${createdLogIds.length} sparade, ${queuedCount} köade pga nätverk.`,
+        {
+          duration: 4000,
+        }
       );
     } else {
       const affectedMembers = members.filter((m) =>
@@ -353,7 +395,7 @@ export default function HomePage() {
 
       const toastMessage =
         changeType === "add"
-          ? `${amount} straff tilldelat ${namesString}`
+          ? `${amount} shots utdelat till ${namesString}`
           : `Skål! ${namesString} drack ${amount}`;
 
       resetForm();
@@ -393,11 +435,11 @@ export default function HomePage() {
     );
   };
 
-  const handleWitnessChange = (memberName: string) => {
+  const handleWitnessChange = (witnessId: string) => {
     setSelectedWitnesses((prev) =>
-      prev.includes(memberName)
-        ? prev.filter((w) => w !== memberName)
-        : [...prev, memberName]
+      prev.includes(witnessId)
+        ? prev.filter((id) => id !== witnessId)
+        : [...prev, witnessId]
     );
   };
 
@@ -452,14 +494,16 @@ export default function HomePage() {
           </label>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-1">
-            {members.map((member) => {
-              const isSelected = selectedMemberIds.includes(member.id);
-              return (
-                <button
-                  key={member.id}
-                  type="button"
-                  onClick={() => toggleMember(member.id)}
-                  className={`
+            {members
+              .filter((m) => m.group_type !== "Joker")
+              .map((member) => {
+                const isSelected = selectedMemberIds.includes(member.id);
+                return (
+                  <button
+                    key={member.id}
+                    type="button"
+                    onClick={() => toggleMember(member.id)}
+                    className={`
                             py-4 px-2 rounded-lg text-sm font-bold transition-all duration-150 border shadow-md
                             ${
                               isSelected
@@ -469,13 +513,13 @@ export default function HomePage() {
                                 : "bg-gray-700/50 text-gray-white border-gray-600 hover:bg-gray-600"
                             }
                         `}
-                >
-                  {member.name}
-                  {isSelected && " ✓"}
-                </button>
-              );
-            })}
-            {members.length === 0 && (
+                  >
+                    {member.name}
+                    {isSelected && " ✓"}
+                  </button>
+                );
+              })}
+            {members.filter((m) => m.group_type !== "Joker").length === 0 && (
               <p className="col-span-full text-center text-gray-500 py-4">
                 Inga medlemmar hittades
               </p>
@@ -561,12 +605,12 @@ export default function HomePage() {
           </label>
           <div className="flex flex-wrap gap-3">
             {allWitnessOptions.map((w) => {
-              const isSelected = selectedWitnesses.includes(w.name);
+              const isSelected = selectedWitnesses.includes(w.id);
               return (
                 <button
                   key={w.id}
                   type="button"
-                  onClick={() => handleWitnessChange(w.name)}
+                  onClick={() => handleWitnessChange(w.id)}
                   className={`
                     flex-grow md:flex-grow-0 py-3 px-4 rounded-lg font-semibold text-base transition-all duration-200 border
                     ${
