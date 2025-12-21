@@ -50,12 +50,12 @@ export default function RootLayout({
         <Toaster 
           position="bottom-center"
           toastOptions={{
-            duration: 2000,
+            duration: 3000,
             success: {
-              duration: 2000,
+              duration: 4000,
             },
             error: {
-              duration: 3000,
+              duration: 4000,
             },
           }}
         />
