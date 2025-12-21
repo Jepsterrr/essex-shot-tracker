@@ -21,8 +21,9 @@ export default function AdminWitnessesPage() {
     fetchWitnesses();
 
     // --- REALTIME SUBSCRIPTION ---
+    const channelName = `admin-witnesses-changes-${Date.now()}`;
     const channel = supabase
-      .channel("admin-witnesses-changes")
+      .channel(channelName)
       .on(
         "postgres_changes",
         {

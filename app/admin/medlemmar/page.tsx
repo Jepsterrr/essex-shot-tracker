@@ -57,8 +57,9 @@ export default function AdminMembersPage() {
     fetchArchivedMembers();
 
     // --- REALTIME SUBSCRIPTION ---
+    const channelName = `admin-members-changes-${Date.now()}`;
     const channel = supabase
-      .channel("admin-members-changes")
+      .channel(channelName)
       .on(
         "postgres_changes",
         {

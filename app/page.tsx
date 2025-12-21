@@ -2,9 +2,9 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import { supabase } from "@/lib/supabase-client";
-import type { Member, Witness } from "@/types/types";
+import type { Member, Witness, LogItem } from "@/types/types";
 import LoadingSkeleton from "./loading";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { addToQueue, cacheData, getCachedData } from "@/lib/offline-queue";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -22,6 +22,7 @@ export default function HomePage() {
   const [reason, setReason] = useState<string>("");
   const [selectedWitnesses, setSelectedWitnesses] = useState<string[]>([]);
   const [otherWitnessValue, setOtherWitnessValue] = useState("");
+  const [recentLogs, setRecentLogs] = useState<LogItem[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [shake, setShake] = useState(false);
@@ -74,7 +75,17 @@ export default function HomePage() {
           .select("*")
           .order("name");
 
+        const { data: latestLogs } = await supabase
+          .from("shot_log")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(5);
+
         if (!isMounted) return;
+
+        if (latestLogs) {
+          setRecentLogs(latestLogs);
+        }
 
         const fetchedMembers = allActiveMembers || [];
 
@@ -108,8 +119,10 @@ export default function HomePage() {
 
     loadData();
 
+    const channelName = `live-updates-${Date.now()}`;
+
     const channel = supabase
-      .channel("live-members-update")
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -196,6 +209,29 @@ export default function HomePage() {
           });
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "shot_log",
+        },
+        (payload) => {
+          if (payload.eventType === "INSERT") {
+            const newLog = payload.new as LogItem;
+            setRecentLogs((prev) => {
+              if (prev.find((l) => l.id === newLog.id)) return prev;
+              return [newLog, ...prev].slice(0, 5);
+            });
+          }
+
+          if (payload.eventType === "DELETE" && payload.old && payload.old.id) {
+            setRecentLogs((prev) =>
+              prev.filter((log) => log.id !== payload.old.id)
+            );
+          }
+        }
+      )
       .subscribe();
 
     return () => {
@@ -227,11 +263,11 @@ export default function HomePage() {
       );
       toast.success("Ångrat! Ingen skada skedd.", {
         id: toastId,
-        duration: 4000,
       });
+      setRecentLogs((prev) => prev.filter((log) => !logIds.includes(log.id)));
     } catch (error) {
       console.error(error);
-      toast.error("Kunde inte ångra allt.", { id: toastId, duration: 4000 });
+      toast.error("Kunde inte ångra allt.", { id: toastId });
     }
   };
 
@@ -310,7 +346,6 @@ export default function HomePage() {
       toast.success(
         "Du är offline! Sparade straffen i kön. De skickas så fort du får nät igen.",
         {
-          duration: 4000,
           style: {
             background: "#333",
             color: "#fff",
@@ -370,23 +405,15 @@ export default function HomePage() {
 
     if (errorCount > 0) {
       toast.error(
-        `Lyckades med ${createdLogIds.length}, Köade: ${queuedCount}, Misslyckades: ${errorCount}`,
-        {
-          duration: 4000,
-        }
+        `Lyckades med ${createdLogIds.length}, Köade: ${queuedCount}, Misslyckades: ${errorCount}`
       );
     } else if (queuedCount > 0 && createdLogIds.length) {
       resetForm();
-      toast.success("Nätverket svajade! Sparade allt i offline-kön.", {
-        duration: 4000,
-      });
+      toast.success("Nätverket svajade! Sparade allt i offline-kön.");
     } else if (queuedCount > 0) {
       resetForm();
       toast.success(
-        `${createdLogIds.length} sparade, ${queuedCount} köade pga nätverk.`,
-        {
-          duration: 4000,
-        }
+        `${createdLogIds.length} sparade, ${queuedCount} köade pga nätverk.`
       );
     } else {
       const affectedMembers = members.filter((m) =>
@@ -427,7 +454,6 @@ export default function HomePage() {
           </div>
         ),
         {
-          duration: 4000,
           style: {
             background: "#333",
             color: "#fff",
@@ -485,8 +511,6 @@ export default function HomePage() {
 
   return (
     <div className="max-w-3xl mx-auto pb-20">
-      <Toaster position="bottom-center" />
-
       <h1 className="text-5xl font-serif font-bold text-center mb-8 text-essex-gold drop-shadow-lg">
         Shot-Protokoll
       </h1>
@@ -582,7 +606,7 @@ export default function HomePage() {
 
           <div className="flex items-center justify-between bg-gray-600/30 p-2 rounded-xl border border-gray-600">
             <motion.button
-              whileTap={{ scale: 0.90 }}
+              whileTap={{ scale: 0.9 }}
               type="button"
               onClick={decrementAmount}
               className={`w-16 h-16 flex-shrink-0 flex items-center justify-center bg-gray-700 text-white rounded-lg text-3xl font-bold transition-colors active:bg-gray-800 ${
@@ -669,7 +693,7 @@ export default function HomePage() {
         <div>
           <input
             type="text"
-            placeholder="+ Annat vittne (namn)"
+            placeholder="+ Annat vittne (namn/nummer)"
             value={otherWitnessValue}
             onChange={(e) => setOtherWitnessValue(e.target.value)}
             className={`form-input w-full bg-gray-800/50 border rounded-lg p-4 text-lg text-white placeholder-gray-500 transition-all ${
@@ -729,6 +753,78 @@ export default function HomePage() {
               </>
             )}
           </motion.button>
+        </div>
+
+        {/* --- AKTIVITETSFLÖDE --- */}
+        <div className="pt-6 border-t border-gray-700/50">
+          <h3 className="text-sm uppercase tracking-widest text-gray-200 font-bold mb-4 text-center">
+            Senaste Händelser
+          </h3>
+
+          <div className="space-y-3">
+            {recentLogs.length === 0 ? (
+              <p className="text-center text-gray-500 text-sm italic">
+                Inga händelser än...
+              </p>
+            ) : (
+              recentLogs.map((log) => {
+                const memberName =
+                  members.find((m) => m.id === log.member_id)?.name || "Okänd";
+
+                const timeString = new Date(log.created_at).toLocaleTimeString(
+                  "sv-SE",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    timeZone: "Europe/Stockholm",
+                  }
+                );
+
+                const isPenalty = log.change > 0;
+
+                return (
+                  <motion.div
+                    key={log.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center justify-between text-sm bg-gray-800/40 p-3 rounded-lg border border-gray-700/50"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-[1rem] font-bold text-gray-200">
+                        {memberName}
+                      </span>
+
+                      <span className="text-xs text-gray-300 mt-2">
+                        {timeString}
+                      </span>
+
+                      <span className="text-xs text-gray-300 mt-2">
+                        {log.reason || (isPenalty ? "Straff" : "Drack")}
+                      </span>
+
+                      {log.witnesses && log.witnesses.length > 0 && (
+                        <span className="text-[0.9rem] text-gray-400 italic mt-1">
+                          Vittnen: {log.witnesses.join(", ")}
+                        </span>
+                      )}
+                    </div>
+
+                    <div
+                      className={`font-mono font-bold text-2xl ${
+                        isPenalty ? "text-red-400" : "text-green-400"
+                      }`}
+                    >
+                      {isPenalty ? "+" : ""}
+                      {log.change}
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
+          </div>
         </div>
       </motion.form>
     </div>

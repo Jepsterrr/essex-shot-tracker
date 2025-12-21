@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "./components/Navbar";
 import UsePwaInputFocusFix from "./components/UsePwaInputFocusFix";
 import OfflineSyncManager from "./components/OfflineSyncManager";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const ebGaramond = EB_Garamond({
@@ -46,6 +47,18 @@ export default function RootLayout({
         className={`${inter.variable} ${ebGaramond.variable} font-sans text-gray-100`}
       >
         <OfflineSyncManager />
+        <Toaster 
+          position="bottom-center"
+          toastOptions={{
+            duration: 2000,
+            success: {
+              duration: 2000,
+            },
+            error: {
+              duration: 3000,
+            },
+          }}
+        />
         <Header />
         <UsePwaInputFocusFix />
         <main className="container mx-auto p-4 pt-24 md:p-8 md:pt-64">{children}</main>

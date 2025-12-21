@@ -23,6 +23,15 @@ export interface ShotLog {
   } | null;
 }
 
+export interface LogItem {
+  id: string;
+  member_id: string;
+  change: number;
+  reason: string | null;
+  created_at: string;
+  witnesses: string[] | null;
+}
+
 export interface Witness {
   id: string;
   name: string;

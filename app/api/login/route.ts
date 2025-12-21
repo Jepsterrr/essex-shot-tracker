@@ -10,9 +10,6 @@ export async function POST(request: Request) {
 
     const sitePasswordHash = process.env.SITE_PASSWORD_HASH;
 
-    console.log("Inskickat lösenord:", password);
-    console.log("Hash från .env-fil:", sitePasswordHash);
-
     if (!sitePasswordHash) {
       console.error("Miljövariabeln SITE_PASSWORD_HASH är inte satt.");
       return NextResponse.json(
@@ -22,7 +19,6 @@ export async function POST(request: Request) {
     }
 
     const match = await bcrypt.compare(password, sitePasswordHash);
-    console.log("Matchar lösenordet?", match);
 
     if (match) {
       // Sätt datan i vår session
