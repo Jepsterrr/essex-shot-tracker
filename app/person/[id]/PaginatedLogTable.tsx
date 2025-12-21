@@ -7,9 +7,10 @@ const ITEMS_PER_PAGE = 15;
 
 interface PaginatedLogTableProps {
   logs: ShotLog[];
+  anchorId?: string;
 }
 
-export default function PaginatedLogTable({ logs }: PaginatedLogTableProps) {
+export default function PaginatedLogTable({ logs, anchorId }: PaginatedLogTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const sortedLogs = logs.sort(
     (a, b) =>
@@ -22,6 +23,34 @@ export default function PaginatedLogTable({ logs }: PaginatedLogTableProps) {
     startIndex,
     startIndex + ITEMS_PER_PAGE
   );
+
+  const scrollToAnchor = () => {
+    if (anchorId) {
+      const element = document.getElementById(anchorId);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          })
+        }, 50);
+      }
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+      scrollToAnchor();
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+      scrollToAnchor();
+    }
+  }
 
   if (logs.length === 0) {
     return (
@@ -114,7 +143,7 @@ export default function PaginatedLogTable({ logs }: PaginatedLogTableProps) {
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
           <button
-            onClick={() => setCurrentPage((p) => p - 1)}
+            onClick={goToPrevPage}
             disabled={currentPage === 1}
             className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300"
           >
@@ -124,7 +153,7 @@ export default function PaginatedLogTable({ logs }: PaginatedLogTableProps) {
             Sida {currentPage} av {totalPages}
           </span>
           <button
-            onClick={() => setCurrentPage((p) => p + 1)}
+            onClick={goToNextPage}
             disabled={currentPage === totalPages}
             className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300"
           >

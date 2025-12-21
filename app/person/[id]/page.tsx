@@ -227,19 +227,25 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
           bg-card-white text-gray-800 rounded-xl shadow-lg p-4 md:p-6 border border-gray-200/10 w-full
           ${!isEssOrJoker ? "max-w-4xl" : ""}
         `}>
-          <h2 className="text-2xl font-bold mb-4 text-gray-200 border-b border-gray-600 pb-2">
+          <h2
+            id="personal-top-anchor"
+            className="text-2xl font-bold mb-4 text-gray-200 border-b border-gray-600 pb-2 scroll-mt-28"
+          >
             Händelselogg (Mottaget)
           </h2>
-          <PaginatedLogTable logs={logs} />
+          <PaginatedLogTable logs={logs} anchorId="personal-top-anchor" />
         </div>
 
         {/* Höger: Vittneslogg (Endast ESS/Joker) */}
         {isEssOrJoker && (
           <div className="bg-card-white text-gray-800 rounded-xl shadow-lg p-4 md:p-6 border border-amber-500/20 w-full">
-            <h2 className="text-2xl font-bold mb-4 text-amber-400 border-b border-amber-500/30 pb-2">
+            <h2 
+              id="witness-top-anchor"
+              className="text-2xl font-bold mb-4 text-amber-400 border-b border-amber-500/30 pb-2 scroll-mt-28"
+            >
               Domarprotokoll (Utdelat)
             </h2>
-            <WitnessLogTable logs={witnessLogs} />
+            <WitnessLogTable logs={witnessLogs} anchorId="witness-top-anchor" />
           </div>
         )}
 

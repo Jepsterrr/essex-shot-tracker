@@ -1,27 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  // Lås scroll när menyn är öppen
-  useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-    };
-  }, [isMenuOpen]);
 
   const bgVariants: Variants = {
     open: {
@@ -68,7 +53,7 @@ export default function Header() {
   };
 
   return (
-    <header className="site-header backdrop-blur-md bg-black/30 text-white sticky top-0 z-50 border-b border-gray-700/50">
+    <header className="site-header backdrop-blur-md bg-black/30 text-white fixed w-full top-0 z-50 border-b border-gray-700/50">
       <nav className="container mx-auto flex items-center justify-between p-3 relative z-50 min-h-[64px]">
         <Link
           href="/"

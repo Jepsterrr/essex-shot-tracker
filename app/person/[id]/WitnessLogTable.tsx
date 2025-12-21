@@ -7,11 +7,12 @@ const ITEMS_PER_PAGE = 10;
 
 interface WitnessLogTableProps {
   logs: ShotLog[];
+  anchorId?: string;
 }
 
-export default function WitnessLogTable({ logs }: WitnessLogTableProps) {
+export default function WitnessLogTable({ logs, anchorId }: WitnessLogTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const sortedLogs = logs.sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
@@ -19,6 +20,34 @@ export default function WitnessLogTable({ logs }: WitnessLogTableProps) {
   const totalPages = Math.ceil(sortedLogs.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedLogs = sortedLogs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const scrollToAnchor = () => {
+    if (anchorId) {
+      const element = document.getElementById(anchorId);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          })
+        }, 50);
+      }
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+      scrollToAnchor();
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+      scrollToAnchor();
+    }
+  }
 
   if (logs.length === 0) {
     return (
@@ -98,7 +127,7 @@ export default function WitnessLogTable({ logs }: WitnessLogTableProps) {
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 pt-4">
           <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onClick={goToPrevPage}
             disabled={currentPage === 1}
             className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 text-sm"
           >
@@ -108,7 +137,7 @@ export default function WitnessLogTable({ logs }: WitnessLogTableProps) {
             Sida {currentPage} av {totalPages}
           </span>
           <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            onClick={goToNextPage}
             disabled={currentPage === totalPages}
             className="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-300 text-sm"
           >

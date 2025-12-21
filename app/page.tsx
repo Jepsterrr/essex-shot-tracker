@@ -204,6 +204,10 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const resetForm = () => {
     setSelectedMemberIds([]);
     setChangeType("add");

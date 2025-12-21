@@ -48,7 +48,7 @@ export default function RootLayout({
         <OfflineSyncManager />
         <Header />
         <UsePwaInputFocusFix />
-        <main className="container mx-auto p-4 md:p-8">{children}</main>
+        <main className="container mx-auto p-4 pt-24 md:p-8 md:pt-64">{children}</main>
       </body>
     </html>
   );

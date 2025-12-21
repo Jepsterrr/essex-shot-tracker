@@ -3,6 +3,7 @@ import type { ShotLog } from "@/types/types";
 import Link from "next/link";
 import SearchBar from "./SearchBar";
 import DeleteButton from "./DeleteButton";
+import ScrollToTopOnParams from "../components/ScrollToTopOnParams";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +70,8 @@ export default async function HistoryPage({
 
   return (
     <div className="max-w-6xl mx-auto bg-card-white text-gray-800 rounded-xl shadow-2xl border border-gray-200/10">
+      <ScrollToTopOnParams elementId="history-top-anchor"/>
+
       <div className="p-4 md:p-8">
         <h1 className="text-3xl md:text-5xl font-serif font-bold text-gray-300 mb-2">
           Händelselogg
@@ -94,7 +97,7 @@ export default async function HistoryPage({
           </div>
         )}
 
-        <div className="border-t border-gray-400 pt-6">
+        <div id="history-top-anchor" className="border-t border-gray-400 pt-6 scroll-mt-64">
           {history.length === 0 ? (
             <p className="text-center text-gray-200 py-12 border">
               {searchQuery
