@@ -6,6 +6,7 @@ import type { Member, Witness } from "@/types/types";
 import LoadingSkeleton from "./loading";
 import toast, { Toaster } from "react-hot-toast";
 import { addToQueue, cacheData, getCachedData } from "@/lib/offline-queue";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function HomePage() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -17,12 +18,14 @@ export default function HomePage() {
 
   // UI State
   const [changeType, setChangeType] = useState<"add" | "remove">("add");
-  const [amount, setAmount] = useState<number | "">(1);
+  const [amount, setAmount] = useState<number>(1);
   const [reason, setReason] = useState<string>("");
   const [selectedWitnesses, setSelectedWitnesses] = useState<string[]>([]);
   const [otherWitnessValue, setOtherWitnessValue] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shake, setShake] = useState(false);
+  const [direction, setDirection] = useState(0);
 
   useEffect(() => {
     const handleStatusChange = () => {
@@ -235,6 +238,8 @@ export default function HomePage() {
     const numAmount = Number(amount);
 
     if (selectedMemberIds.length === 0 || numAmount <= 0) {
+      setShake(true);
+      setTimeout(() => setShake(false), 300);
       toast.error("Välj minst en medlem och antal > 0");
       setIsSubmitting(false);
       return;
@@ -444,18 +449,30 @@ export default function HomePage() {
   };
 
   const incrementAmount = () => {
-    setAmount((prev) => (typeof prev === "number" ? prev + 1 : 1));
-    if (typeof navigator !== "undefined" && navigator.vibrate)
-      navigator.vibrate(10);
+    setDirection(1);
+    setAmount((prev) => prev + 1);
   };
 
   const decrementAmount = () => {
-    setAmount((prev) => {
-      if (typeof prev !== "number") return 1;
-      return prev > 1 ? prev - 1 : 1;
-    });
-    if (typeof navigator !== "undefined" && navigator.vibrate)
-      navigator.vibrate(10);
+    setDirection(-1);
+    setAmount((prev) => (prev > 1 ? prev - 1 : 1));
+  };
+
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 50 : -50,
+      opacity: 0,
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 50 : -50,
+      opacity: 0,
+    }),
   };
 
   if (isLoadingData) return <LoadingSkeleton />;
@@ -476,7 +493,9 @@ export default function HomePage() {
         </div>
       )}
 
-      <form
+      <motion.form
+        animate={shake ? { x: [-10, 10, -10, 10, 0] } : {}}
+        transition={{ duration: 0.3 }}
         onSubmit={handleSubmit}
         className="space-y-8 bg-card-white text-gray-200 p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-200/10"
       >
@@ -499,7 +518,8 @@ export default function HomePage() {
               .map((member) => {
                 const isSelected = selectedMemberIds.includes(member.id);
                 return (
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
                     key={member.id}
                     type="button"
                     onClick={() => toggleMember(member.id)}
@@ -516,7 +536,7 @@ export default function HomePage() {
                   >
                     {member.name}
                     {isSelected && " ✓"}
-                  </button>
+                  </motion.button>
                 );
               })}
             {members.filter((m) => m.group_type !== "Joker").length === 0 && (
@@ -530,7 +550,8 @@ export default function HomePage() {
         {/* --- LÄGE & ANTAL --- */}
         <div className="space-y-4">
           <div className="grid grid-cols-2 bg-gray-900 p-1 rounded-xl border border-gray-600">
-            <button
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               type="button"
               onClick={() => setChangeType("add")}
               className={`py-4 text-lg font-bold rounded-lg transition-all duration-300 ${
@@ -540,8 +561,9 @@ export default function HomePage() {
               }`}
             >
               GE SKULD
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               type="button"
               onClick={() => setChangeType("remove")}
               className={`py-4 text-lg font-bold rounded-lg transition-all duration-300 ${
@@ -551,11 +573,12 @@ export default function HomePage() {
               }`}
             >
               DRICKA
-            </button>
+            </motion.button>
           </div>
 
           <div className="flex items-center justify-between bg-gray-600/30 p-2 rounded-xl border border-gray-600">
-            <button
+            <motion.button
+              whileTap={{ scale: 0.90 }}
               type="button"
               onClick={decrementAmount}
               className={`w-16 h-16 flex-shrink-0 flex items-center justify-center bg-gray-700 text-white rounded-lg text-3xl font-bold transition-colors active:bg-gray-800 ${
@@ -563,30 +586,39 @@ export default function HomePage() {
               }`}
             >
               −
-            </button>
-            <div className="flex flex-col items-center flex-grow px-4">
-              <span className="text-sm text-gray-400 uppercase tracking-widest font-bold mb-1">
-                Antal
-              </span>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) =>
-                  setAmount(e.target.value === "" ? "" : Number(e.target.value))
-                }
-                className={`
-                  w-full bg-transparent text-center text-5xl font-bold border-none focus:ring-0 p-0 no-spinner
-                  ${
-                    isAddMode
-                      ? "text-essex-red placeholder-red-800/50"
-                      : "text-green-500 placeholder-green-800/50"
-                  }
-                `}
-                placeholder="0"
-                min="1"
-              />
+            </motion.button>
+            <div className="relative h-16 flex-grow flex items-center justify-center overflow-hidden">
+              <div className="flex flex-col items-center w-full">
+                <span className="text-sm text-gray-400 uppercase tracking-widest font-bold mb-1">
+                  Antal
+                </span>
+                <div className="relative h-12 w-full flex justify-center items-center">
+                  <AnimatePresence mode="popLayout" custom={direction}>
+                    <motion.span
+                      key={amount}
+                      custom={direction}
+                      variants={variants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{
+                        x: { type: "spring", stiffness: 300, damping: 30 },
+                        opacity: { duration: 0.2 },
+                      }}
+                      className={`
+                        text-5xl font-bold absolute
+                        ${isAddMode ? "text-essex-red" : "text-green-500"}
+                      `}
+                    >
+                      {amount}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+              </div>
             </div>
-            <button
+
+            <motion.button
+              whileTap={{ scale: 0.9 }}
               type="button"
               onClick={incrementAmount}
               className={`w-16 h-16 flex-shrink-0 flex items-center justify-center bg-gray-700 text-white rounded-lg text-3xl font-bold transition-colors active:bg-gray-800 ${
@@ -594,7 +626,7 @@ export default function HomePage() {
               }`}
             >
               +
-            </button>
+            </motion.button>
           </div>
         </div>
 
@@ -607,7 +639,8 @@ export default function HomePage() {
             {allWitnessOptions.map((w) => {
               const isSelected = selectedWitnesses.includes(w.id);
               return (
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
                   key={w.id}
                   type="button"
                   onClick={() => handleWitnessChange(w.id)}
@@ -623,7 +656,7 @@ export default function HomePage() {
                   `}
                 >
                   {w.name}
-                </button>
+                </motion.button>
               );
             })}
           </div>
@@ -663,7 +696,8 @@ export default function HomePage() {
 
         {/* --- SUBMIT --- */}
         <div className="pt-4">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={isSubmitting}
             className={`
@@ -690,9 +724,9 @@ export default function HomePage() {
                 </span>
               </>
             )}
-          </button>
+          </motion.button>
         </div>
-      </form>
+      </motion.form>
     </div>
   );
 }

@@ -2,7 +2,9 @@
 
 import { useEffect } from "react";
 import toast from "react-hot-toast";
-import { getQueue, removeFromQueue } from "@/lib/offline-queue";
+import { getQueue, removeFromQueue, incrementRetryCount } from "@/lib/offline-queue";
+
+const MAX_RETRIES = 5;
 
 export default function OfflineSyncManager() {
   useEffect(() => {
@@ -12,6 +14,7 @@ export default function OfflineSyncManager() {
 
       const toastId = toast.loading(`Synkar ${queue.length} sparade händelser...`);
       let successCount = 0;
+      let failCount = 0;
 
       // Vi loopar igenom kön och försöker skicka varje post
       for (const item of queue) {
@@ -26,7 +29,20 @@ export default function OfflineSyncManager() {
             removeFromQueue(item.id);
             successCount++;
           } else {
-            console.error("Failed to sync item", item);
+            if (res.status >= 400 && res.status < 500) {
+              console.error(`Tog bort ogiltig post (Status ${res.status}):`, item);
+              removeFromQueue(item.id);
+              failCount++;
+            } else {
+              const retries = incrementRetryCount(item.id);
+              console.warn(`Misslyckades att synka item ${item.id}. Försök: ${retries}/${MAX_RETRIES}`);
+              
+              if (retries >= MAX_RETRIES) {
+                console.error("Max retries uppnått. Tar bort item:", item);
+                removeFromQueue(item.id);
+                failCount++;
+              }
+            }
           }
         } catch (error) {
           console.error("Sync error:", error);
@@ -34,7 +50,9 @@ export default function OfflineSyncManager() {
       }
 
       if (successCount > 0) {
-        toast.success(`Synkroniserade ${successCount} straffar!`, { id: toastId });
+        toast.success(`Synkroniserade ${successCount} händelser!`, { id: toastId });
+      } else if (failCount > 0) {
+        toast.error(`${failCount} händelser var ogiltiga och kunde inte sparas. Borttagna från kön.`, { id: toastId });
       } else {
         toast.dismiss(toastId);
       }

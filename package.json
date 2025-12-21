@@ -12,6 +12,7 @@
     "@ducanh2912/next-pwa": "^10.2.9",
     "@supabase/supabase-js": "^2.51.0",
     "bcrypt": "^6.0.0",
+    "framer-motion": "^12.23.26",
     "iron-session": "^8.0.4",
     "next": "^15.5.9",
     "react": "^19.0.0",

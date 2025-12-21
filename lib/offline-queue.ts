@@ -4,6 +4,7 @@ export interface QueuedShot {
   id: string;
   timestamp: number;
   payload: any;
+  retryCount?: number;
 }
 
 const STORAGE_KEYS = {
@@ -24,6 +25,7 @@ export const addToQueue = (payload: any) => {
     id: crypto.randomUUID(),
     timestamp: Date.now(),
     payload,
+    retryCount: 0,
   };
 
   currentQueue.push(newItem);
@@ -46,6 +48,22 @@ export const removeFromQueue = (id: string) => {
   const currentQueue = getQueue();
   const newQueue = currentQueue.filter((item) => item.id !== id);
   localStorage.setItem(STORAGE_KEYS.QUEUE, JSON.stringify(newQueue));
+};
+
+export const incrementRetryCount = (id: string) => {
+  if (typeof window === "undefined") return 0;
+  
+  const currentQueue = getQueue();
+  const index = currentQueue.findIndex((item) => item.id === id);
+  
+  if (index === -1) return 0;
+
+  const currentCount = currentQueue[index].retryCount || 0;
+  currentQueue[index].retryCount = currentCount + 1;
+  
+  localStorage.setItem(STORAGE_KEYS.QUEUE, JSON.stringify(currentQueue));
+  
+  return currentQueue[index].retryCount;
 };
 
 // Cache-hantering för medlemmar
