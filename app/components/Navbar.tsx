@@ -78,6 +78,7 @@ export default function Header() {
             ["Historik", "/historik"],
             ["Ställning", "/standings"],
             ["Topplistor", "/topplistor"],
+            ["Spelhall", "/arcade"],
           ].map(([title, url]) => (
             <Link
               key={url}
@@ -149,7 +150,7 @@ export default function Header() {
             animate="open"
             exit="closed"
             variants={listVariants}
-            className="fixed inset-0 z-40 md:hidden flex flex-col items-center justify-center pointer-events-auto w-full h-[100dvh] pt-16 touch-none"
+            className="fixed inset-0 z-40 md:hidden flex flex-col items-center justify-center pointer-events-auto w-full h-[100dvh] pt-8 touch-none"
           >
             <ul className="flex flex-col items-center space-y-8 text-3xl font-serif w-full text-center">
               {[
@@ -157,6 +158,7 @@ export default function Header() {
                 ["Ställning", "/standings"],
                 ["Historik", "/historik"],
                 ["Topplistor", "/topplistor"],
+                ["Spelhall", "/arcade"],
               ].map(([title, url]) => (
                 <motion.li key={url} variants={itemVariants} className="w-full">
                   <Link
