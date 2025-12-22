@@ -122,7 +122,7 @@ export default function BlackjackPage() {
   };
 
   const createDeck = () => {
-    let newDeck: Card[] = [];
+    const newDeck: Card[] = [];
     SUITS.forEach((suit) => {
       VALUES.forEach((v) => {
         newDeck.push({
@@ -180,7 +180,7 @@ export default function BlackjackPage() {
 
     await delay(800);
 
-    let currentDeck = [...deck];
+    const currentDeck = [...deck];
     while (calculateScore(currentDealer) < 17) {
       const nextCard = { ...currentDeck.pop()!, flipped: false };
       currentDealer = [...currentDealer, nextCard as Card];
