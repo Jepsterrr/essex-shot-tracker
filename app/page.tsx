@@ -79,7 +79,7 @@ export default function HomePage() {
           .from("shot_log")
           .select("*")
           .order("created_at", { ascending: false })
-          .limit(5);
+          .limit(15);
 
         if (!isMounted) return;
 
@@ -221,7 +221,7 @@ export default function HomePage() {
             const newLog = payload.new as LogItem;
             setRecentLogs((prev) => {
               if (prev.find((l) => l.id === newLog.id)) return prev;
-              return [newLog, ...prev].slice(0, 5);
+              return [newLog, ...prev].slice(0, 15);
             });
           }
 
@@ -264,7 +264,6 @@ export default function HomePage() {
       toast.success("Ångrat! Ingen skada skedd.", {
         id: toastId,
       });
-      setRecentLogs((prev) => prev.filter((log) => !logIds.includes(log.id)));
     } catch (error) {
       console.error(error);
       toast.error("Kunde inte ångra allt.", { id: toastId });
@@ -767,7 +766,7 @@ export default function HomePage() {
                 Inga händelser än...
               </p>
             ) : (
-              recentLogs.map((log) => {
+              recentLogs.slice(0, 5).map((log) => {
                 const memberName =
                   members.find((m) => m.id === log.member_id)?.name || "Okänd";
 
