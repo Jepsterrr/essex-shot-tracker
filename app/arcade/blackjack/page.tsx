@@ -202,7 +202,7 @@ export default function BlackjackPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-between h-[calc(100dvh-130px)] w-full overflow-hidden bg-[#0000004d]">
+    <div className="flex flex-col items-center justify-between h-[calc(100dvh-130px)] w-full overflow-hidden bg-[#0000004d] touch-none">
       {/* HEADER */}
       <div className="w-full flex justify-between items-center shrink-0 px-4">
         <Link href="/arcade" className="text-gray-400 py-2 text-lg">

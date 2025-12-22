@@ -83,10 +83,10 @@ export default function Header() {
             <Link
               key={url}
               href={url}
-              className="font-semibold text-gray-300 hover:text-essex-gold transition-colors relative group whitespace-nowrap"
+              className="font-semibold text-gray-300 hover:text-[#9a7b2c] transition-colors relative group whitespace-nowrap"
             >
               {title}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-essex-gold transition-all group-hover:w-full"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#9a7b2c] transition-all group-hover:w-full"></span>
             </Link>
           ))}
 

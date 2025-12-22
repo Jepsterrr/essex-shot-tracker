@@ -39,7 +39,7 @@ export default function DicePage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-140px)] p-4 max-w-md mx-auto justify-between overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-140px)] p-4 max-w-md mx-auto justify-between overflow-hidden touch-pan-x">
       <div className="flex justify-between items-center shrink-0">
         <Link
           href="/arcade"

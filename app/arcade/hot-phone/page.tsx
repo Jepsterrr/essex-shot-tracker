@@ -55,7 +55,7 @@ export default function HotPotatoPage() {
 
   return (
     <div
-      className={`flex flex-col items-center justify-between h-[calc(100dvh-140px)] w-full transition-colors duration-300 overflow-hidden ${
+      className={`flex flex-col items-center justify-between h-[calc(100dvh-140px)] w-full transition-colors duration-300 overflow-hidden touch-none ${
         gameState === "exploded" ? "bg-red-900/50 rounded-xl" : ""
       }`}
     >
