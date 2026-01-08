@@ -151,6 +151,47 @@ export default function BlackjackPage() {
     return deck.sort(() => Math.random() - 0.5);
   };
 
+  const handleDealerLogic = useCallback(async () => {
+    if (isDealerLoopRunning.current) return;
+    isDealerLoopRunning.current = true;
+    try {
+      let dHand = (room?.dealer_hand || []).map((c: Card) => ({
+        ...c,
+        flipped: false,
+      }));
+      let dDeck = [...(room?.deck || [])];
+      await supabase
+        .from("blackjack_rooms")
+        .update({ dealer_hand: dHand, updated_at: new Date().toISOString() })
+        .eq("room_code", room.room_code);
+      await delay(1200);
+      let currentScore = calculateScore(dHand);
+      while (currentScore < 17) {
+        if (dDeck.length === 0) dDeck = createDeck(room?.num_decks || 6);
+        const newCard = dDeck.pop();
+        if (newCard) {
+          dHand = [...dHand, newCard];
+          currentScore = calculateScore(dHand);
+          await supabase
+            .from("blackjack_rooms")
+            .update({
+              dealer_hand: dHand,
+              deck: dDeck,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("room_code", room.room_code);
+          await delay(1200);
+        } else break;
+      }
+      await supabase
+        .from("blackjack_rooms")
+        .update({ game_state: "done", updated_at: new Date().toISOString() })
+        .eq("room_code", room.room_code);
+    } finally {
+      isDealerLoopRunning.current = false;
+    }
+  }, [room, myId, numDecks]);
+
   const leaveRoom = useCallback(async () => {
     const code = roomCodeRef.current;
     if (!code || !inRoom) return;
@@ -225,7 +266,7 @@ export default function BlackjackPage() {
     ) {
       handleDealerLogic();
     }
-  }, [room?.game_state, room?.host_id, myId]);
+  }, [room?.game_state, room?.host_id, myId, handleDealerLogic]);
 
   const handleJoin = async () => {
     if (!name || !roomInput) return;
@@ -304,8 +345,8 @@ export default function BlackjackPage() {
     if (dDeck.length < freshPlayers.length * 10 || dDeck.length === 0)
       dDeck = createDeck(currentRoom.num_decks || 6);
 
-    let dHand: Card[] = [];
-    let pList: Player[] = JSON.parse(JSON.stringify(freshPlayers));
+    const dHand: Card[] = [];
+    const pList: Player[] = JSON.parse(JSON.stringify(freshPlayers));
 
     await supabase
       .from("blackjack_rooms")
@@ -412,47 +453,6 @@ export default function BlackjackPage() {
         updated_at: new Date().toISOString(),
       })
       .eq("room_code", room.room_code);
-  };
-
-  const handleDealerLogic = async () => {
-    if (isDealerLoopRunning.current) return;
-    isDealerLoopRunning.current = true;
-    try {
-      let dHand = (room?.dealer_hand || []).map((c: Card) => ({
-        ...c,
-        flipped: false,
-      }));
-      let dDeck = [...(room?.deck || [])];
-      await supabase
-        .from("blackjack_rooms")
-        .update({ dealer_hand: dHand, updated_at: new Date().toISOString() })
-        .eq("room_code", room.room_code);
-      await delay(1200);
-      let currentScore = calculateScore(dHand);
-      while (currentScore < 17) {
-        if (dDeck.length === 0) dDeck = createDeck(room?.num_decks || 6);
-        const newCard = dDeck.pop();
-        if (newCard) {
-          dHand = [...dHand, newCard];
-          currentScore = calculateScore(dHand);
-          await supabase
-            .from("blackjack_rooms")
-            .update({
-              dealer_hand: dHand,
-              deck: dDeck,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("room_code", room.room_code);
-          await delay(1200);
-        } else break;
-      }
-      await supabase
-        .from("blackjack_rooms")
-        .update({ game_state: "done", updated_at: new Date().toISOString() })
-        .eq("room_code", room.room_code);
-    } finally {
-      isDealerLoopRunning.current = false;
-    }
   };
 
   const getResult = (p: Player) => {

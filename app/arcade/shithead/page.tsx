@@ -74,7 +74,7 @@ const CardView = ({
         opacity: 1,
         scale: 1,
         y: selected ? -15 : 0,
-        zIndex: (Number(index) || 0) + 10, 
+        zIndex: (Number(index) || 0) + 10,
       }}
       exit={{ opacity: 0, scale: 0.8 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
@@ -239,7 +239,7 @@ export default function VandtiaPage() {
 
   const startNewGame = async () => {
     if (!room || room.players.length < 2) return;
-    let deck: Card[] = [];
+    const deck: Card[] = [];
     SUITS.forEach((s) =>
       VALUES.forEach((v, i) =>
         deck.push({
@@ -278,7 +278,9 @@ export default function VandtiaPage() {
     const updatedPlayers = room.players.map((p: Player) => {
       if (p.id === myId) {
         const face_up = p.hand.filter((c) => selectedIds.includes(c.id));
-        const hand = sortCards(p.hand.filter((c) => !selectedIds.includes(c.id)));
+        const hand = sortCards(
+          p.hand.filter((c) => !selectedIds.includes(c.id))
+        );
         return { ...p, face_up, hand, ready: true };
       }
       return p;
@@ -296,124 +298,172 @@ export default function VandtiaPage() {
   };
 
   const playCards = async () => {
-  if (room.current_turn_player_id !== myId || selectedIds.length === 0) return;
-  const me = room.players.find((p: Player) => p.id === myId);
-  if (!me) return;
+    if (room.current_turn_player_id !== myId || selectedIds.length === 0)
+      return;
+    const me = room.players.find((p: Player) => p.id === myId);
+    if (!me) return;
+    const cardsToPlay = [...me.hand, ...me.face_up].filter((c) =>
+      selectedIds.includes(c.id)
+    );
+    if (cardsToPlay.length === 0) return;
 
-  // Hämta de valda korten från antingen hand eller bord
-  const cardsToPlay = [...me.hand, ...me.face_up].filter((c) => selectedIds.includes(c.id));
-  
-  // Säkerhetskoll: Om vi inte hittar korten, avbryt inte tyst
-  if (cardsToPlay.length === 0) return;
-
-  // Kontroll: Spela klart handen först
-  const playingFromFaceUp = me.face_up.some((c: Card) => selectedIds.includes(c.id));
-  if (playingFromFaceUp && me.hand.length > 0) {
-    alert("Du måste spela klart korten på handen först!");
-    return;
-  }
-
-  // Validera rang och om kortet får läggas på högen
-  const cardRank = cardsToPlay[0].rank;
-  if (!cardsToPlay.every((c) => c.rank === cardRank) || !canPlayCard(cardsToPlay[0], room.pile)) {
-    return; 
-  }
-
-  let newPile = [...(room.pile || []), ...cardsToPlay];
-  let newDeck = [...(room.deck || [])];
-  
-  // Beräkna vad som är kvar EFTER detta drag
-  const remainingHand = me.hand.filter((c: Card) => !selectedIds.includes(c.id));
-  const remainingFaceUp = me.face_up.filter((c: Card) => !selectedIds.includes(c.id));
-  
-  // Man försöker gå ut om man inte har hand, inte har kvarvarande face_up och inga face_down
-  const isAttemptingToFinish = remainingHand.length === 0 && remainingFaceUp.length === 0 && me.face_down.length === 0;
-  
-  // REGEL: Kan inte gå ut på 2 eller 10
-  const invalidFinish = isAttemptingToFinish && (cardRank === 2 || cardRank === 10);
-
-  let isWinner = false;
-  let finalActionMsg = "";
-  let updatedPile = newPile;
-
-  const updatedPlayers = room.players.map((p: Player) => {
-    if (p.id === myId) {
-      if (invalidFinish) {
-        // BESTRAFFNING: Behåll dina bordskort men plocka upp hela högen till handen
-        // Vi tar bort de spelade korten från face_up men lägger till dem + högen i handen
-        return { 
-          ...p, 
-          hand: sortCards([...newPile]), 
-          face_up: remainingFaceUp, // Här var felet innan (den satte []), nu behålls resterande
-          face_down: p.face_down 
-        };
-      }
-
-      // Normalt drag
-      let nextHand = [...remainingHand];
-      while (nextHand.length < 3 && newDeck.length > 0) nextHand.push(newDeck.pop()!);
-      
-      const updatedMe = { ...p, hand: sortCards(nextHand), face_up: remainingFaceUp };
-      if (checkWinner(updatedMe)) isWinner = true;
-      return updatedMe;
-    }
-    return p;
-  });
-
-  if (invalidFinish) {
-    updatedPile = []; // Högen plockas upp av spelaren
-    finalActionMsg = `STUPSTOCK! ${me.name} försökte gå ut på en ${cardRank === 2 ? 'tvåa' : 'tia'} och får plocka upp!`;
-  } else {
-    // Kolla om högen bränns (Tia eller fyra lika)
-    const burn = cardRank === 10 || (newPile.length >= 4 && newPile.slice(-4).every(c => c.rank === cardRank));
-    updatedPile = burn ? [] : newPile;
-    finalActionMsg = burn ? "HÖGEN VÄNDES!" : "";
-  }
-
-  // Bestäm vems tur det är
-  const nextId = (cardRank === 2 || cardRank === 10 || finalActionMsg === "HÖGEN VÄNDES!") && !invalidFinish 
-    ? myId 
-    : room.players[(room.players.findIndex((p: any) => p.id === myId) + 1) % room.players.length].id;
-
-  await supabase.from("vandtia_rooms").update({
-    pile: updatedPile,
-    players: updatedPlayers,
-    deck: newDeck,
-    current_turn_player_id: nextId,
-    game_state: isWinner ? "finished" : "playing",
-    winner_name: isWinner ? me.name : null,
-    last_action_msg: finalActionMsg,
-  }).eq("room_code", room.room_code);
-
-  setSelectedIds([]);
-};
-
-  const playFaceDown = async (cardIndex: number) => {
-  const me = room.players.find((p: Player) => p.id === myId);
-  if (!me || room.current_turn_player_id !== myId || me.hand.length > 0 || me.face_up.length > 0) return;
-
-  const card = me.face_down[cardIndex];
-  const success = canPlayCard(card, room.pile);
-  const newFaceDown = me.face_down.filter((_: Card, i: number) => i !== cardIndex);
-  const isLastCard = newFaceDown.length === 0;
-
-  if (success) {
-    // REGEL: Kan inte gå ut på 2 eller 10
-    if (isLastCard && (card.rank === 2 || card.rank === 10)) {
-      const updatedPlayers = room.players.map((p: Player) => 
-        p.id === myId ? { ...p, hand: sortCards([...room.pile, card]), face_down: [] } : p
-      );
-      await supabase.from("vandtia_rooms").update({
-        pile: [],
-        players: updatedPlayers,
-        current_turn_player_id: myId, // Man får fortsätta spela sin nya hand
-        last_action_msg: `SISTA KORTET VAR ${card.label}! Måste plocka upp högen.`
-      }).eq("room_code", room.room_code);
+    // Kontroll: Spela klart handen först
+    const playingFromFaceUp = me.face_up.some((c: Card) =>
+      selectedIds.includes(c.id)
+    );
+    if (playingFromFaceUp && me.hand.length > 0) {
+      alert("Du måste spela klart korten på handen först!");
       return;
     }
 
-      let newPile = [...room.pile, card];
-      let burn =
+    // Validera rang och om kortet får läggas på högen
+    const cardRank = cardsToPlay[0].rank;
+    if (
+      !cardsToPlay.every((c) => c.rank === cardRank) ||
+      !canPlayCard(cardsToPlay[0], room.pile)
+    ) {
+      return;
+    }
+
+    const newPile = [...(room.pile || []), ...cardsToPlay];
+    const newDeck = [...(room.deck || [])];
+    const remainingHand = me.hand.filter(
+      (c: Card) => !selectedIds.includes(c.id)
+    );
+    const remainingFaceUp = me.face_up.filter(
+      (c: Card) => !selectedIds.includes(c.id)
+    );
+
+    // Man försöker gå ut om man inte har hand, inte har kvarvarande face_up och inga face_down
+    const isAttemptingToFinish =
+      remainingHand.length === 0 &&
+      remainingFaceUp.length === 0 &&
+      me.face_down.length === 0;
+
+    // Kan inte gå ut på 2 eller 10
+    const invalidFinish =
+      isAttemptingToFinish && (cardRank === 2 || cardRank === 10);
+
+    let isWinner = false;
+    let finalActionMsg = "";
+    let updatedPile = newPile;
+
+    const updatedPlayers = room.players.map((p: Player) => {
+      if (p.id === myId) {
+        if (invalidFinish) {
+          // Vi tar bort de spelade korten från face_up men lägger till dem + högen i handen
+          return {
+            ...p,
+            hand: sortCards([...newPile]),
+            face_up: remainingFaceUp,
+            face_down: p.face_down,
+          };
+        }
+
+        // Normalt drag
+        const nextHand = [...remainingHand];
+        while (nextHand.length < 3 && newDeck.length > 0)
+          nextHand.push(newDeck.pop()!);
+
+        const updatedMe = {
+          ...p,
+          hand: sortCards(nextHand),
+          face_up: remainingFaceUp,
+        };
+        if (checkWinner(updatedMe)) isWinner = true;
+        return updatedMe;
+      }
+      return p;
+    });
+
+    if (invalidFinish) {
+      updatedPile = []; // Högen plockas upp av spelaren
+      finalActionMsg = `STUPSTOCK! ${me.name} försökte gå ut på en ${
+        cardRank === 2 ? "tvåa" : "tia"
+      } och får plocka upp!`;
+    } else {
+      // Kolla om högen bränns (Tia eller fyra lika)
+      const burn =
+        cardRank === 10 ||
+        (newPile.length >= 4 &&
+          newPile.slice(-4).every((c) => c.rank === cardRank));
+      updatedPile = burn ? [] : newPile;
+      finalActionMsg = burn ? "HÖGEN VÄNDES!" : "";
+    }
+
+    // Bestäm vems tur det är
+    const nextId =
+      (cardRank === 2 ||
+        cardRank === 10 ||
+        finalActionMsg === "HÖGEN VÄNDES!") &&
+      !invalidFinish
+        ? myId
+        : room.players[
+            (room.players.findIndex((p: any) => p.id === myId) + 1) %
+              room.players.length
+          ].id;
+
+    await supabase
+      .from("vandtia_rooms")
+      .update({
+        pile: updatedPile,
+        players: updatedPlayers,
+        deck: newDeck,
+        current_turn_player_id: nextId,
+        game_state: isWinner ? "finished" : "playing",
+        winner_name: isWinner ? me.name : null,
+        last_action_msg: finalActionMsg,
+      })
+      .eq("room_code", room.room_code);
+
+    setSelectedIds([]);
+  };
+
+  const playFaceDown = async (cardIndex: number) => {
+    const me = room.players.find((p: Player) => p.id === myId);
+    if (
+      !me ||
+      room.current_turn_player_id !== myId ||
+      me.hand.length > 0 ||
+      me.face_up.length > 0
+    )
+      return;
+
+    const card = me.face_down[cardIndex];
+    const success = canPlayCard(card, room.pile);
+    const newFaceDown = me.face_down.filter(
+      (_: Card, i: number) => i !== cardIndex
+    );
+    const isLastCard = newFaceDown.length === 0;
+
+    if (success) {
+      const nextPlayerId =
+        room.players[
+          (room.players.findIndex((p: any) => p.id === myId) + 1) %
+            room.players.length
+        ].id;
+
+      // REGEL: Kan inte gå ut på 2 eller 10
+      if (isLastCard && (card.rank === 2 || card.rank === 10)) {
+        const updatedPlayers = room.players.map((p: Player) =>
+          p.id === myId
+            ? { ...p, hand: sortCards([...room.pile, card]), face_down: [] }
+            : p
+        );
+        await supabase
+          .from("vandtia_rooms")
+          .update({
+            pile: [],
+            players: updatedPlayers,
+            current_turn_player_id: nextPlayerId,
+            last_action_msg: `SISTA KORTET VAR ${card.label}! Måste plocka upp högen.`,
+          })
+          .eq("room_code", room.room_code);
+        return;
+      }
+
+      const newPile = [...room.pile, card];
+      const burn =
         card.rank === 10 ||
         (newPile.length >= 4 &&
           newPile.slice(-4).every((c) => c.rank === card.rank));
@@ -478,8 +528,8 @@ export default function VandtiaPage() {
     const success = canPlayCard(card, room.pile);
 
     if (success) {
-      let newPile = [...(room?.pile || []), card];
-      let burn =
+      const newPile = [...(room?.pile || []), card];
+      const burn =
         card.rank === 10 ||
         (newPile.length >= 4 &&
           newPile
@@ -651,33 +701,33 @@ export default function VandtiaPage() {
               >
                 <div className="flex gap-2 mb-1">
                   {[0, 1, 2].map((i) => (
-                    <div 
-                      key={i} 
+                    <div
+                      key={i}
                       className="relative w-10 h-14 bg-black/20 rounded border border-white/10 flex items-center justify-center"
                     >
                       {/* 1. Underst: Det dolda kortet (Face down) */}
                       {p.face_down && p.face_down[i] && (
                         <div className="absolute inset-0 z-0">
-                          <CardView 
-                            card={null} 
-                            small 
-                            hidden 
-                            noMargin 
-                            isOpponent 
+                          <CardView
+                            card={null}
+                            small
+                            hidden
+                            noMargin
+                            isOpponent
                           />
                         </div>
                       )}
                       {p.face_up && p.face_up[i] && (
                         <div className="absolute inset-0 z-10">
-                          <CardView 
-                            card={p.face_up[i]} 
-                            small 
-                            noMargin 
-                            isOpponent 
+                          <CardView
+                            card={p.face_up[i]}
+                            small
+                            noMargin
+                            isOpponent
                           />
                         </div>
                       )}
-                      
+
                       {/* Om platsen är helt tom visas bara den mörka boxen ovan */}
                     </div>
                   ))}
