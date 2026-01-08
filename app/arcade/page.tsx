@@ -31,10 +31,18 @@ const GAMES = [
   {
     id: "blackjack",
     title: "Klunk-Blackjack",
-    description: "Du mot Banken. Vågar du?",
+    description: "Du mot Banken. Vågar du? Kan spelas fler",
     icon: "🃏",
     color: "from-green-900 to-green-600",
     href: "/arcade/blackjack",
+  },
+  {
+    id: "skitgubbe",
+    title: "Skitgubbe / Vändtia",
+    description: "Du mot kompisar, 2-5 spelare.",
+    icon: "🤍",
+    color: "from-purple-900 to-purple-400",
+    href: "/arcade/shithead",
   },
 ];
 
