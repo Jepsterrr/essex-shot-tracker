@@ -26,6 +26,9 @@ export async function middleware(request: NextRequest) {
 
     // Om versionen i kakan är gammal, logga ut
     if (!error && data?.value && session.passwordVersion !== data.value) {
+      session.isLoggedIn = false;
+      session.passwordVersion = "";
+      
       session.destroy();
       const redirectResponse = NextResponse.redirect(new URL("/login", request.url));
       const destroyedSession = await getIronSession<SessionData>(request, redirectResponse, sessionOptions);
