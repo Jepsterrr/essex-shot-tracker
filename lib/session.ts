@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 export interface SessionData {
   isLoggedIn: boolean;
+  passwordVersion: string;
 }
 
 // Konfiguration för vår session

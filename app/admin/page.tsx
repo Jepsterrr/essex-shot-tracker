@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase-client";
 import Link from "next/link";
+import ChangePasswordForm from "./ChangePasswordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -155,6 +156,11 @@ export default async function AdminDashboard() {
           description="Administrera listan över personer som inte är medlemmar."
         />
       </div>
+
+      <h2 className="text-2xl font-serif font-semibold text-gray-300 mb-4 mt-12">
+        Systeminställningar
+      </h2>
+      <ChangePasswordForm />
 
       {/* --- Externa länkar --- */}
       <h2 className="text-2xl font-serif font-semibold text-gray-300 mb-4 mt-8">
