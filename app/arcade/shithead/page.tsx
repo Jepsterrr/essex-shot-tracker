@@ -269,7 +269,13 @@ export default function VandtiaPage() {
     });
     await supabase
       .from("vandtia_rooms")
-      .update({ game_state: "setup", deck, players, pile: [] })
+      .update({
+        updated_at: new Date().toISOString(),
+        game_state: "setup",
+        deck,
+        players,
+        pile: [],
+      })
       .eq("room_code", room.room_code);
   };
 
@@ -290,6 +296,7 @@ export default function VandtiaPage() {
       .from("vandtia_rooms")
       .update({
         players: updatedPlayers,
+        updated_at: new Date().toISOString(),
         game_state: allReady ? "playing" : "setup",
         current_turn_player_id: allReady ? updatedPlayers[0].id : null,
       })
@@ -410,6 +417,7 @@ export default function VandtiaPage() {
         players: updatedPlayers,
         deck: newDeck,
         current_turn_player_id: nextId,
+        updated_at: new Date().toISOString(),
         game_state: isWinner ? "finished" : "playing",
         winner_name: isWinner ? me.name : null,
         last_action_msg: finalActionMsg,
@@ -456,6 +464,7 @@ export default function VandtiaPage() {
             pile: [],
             players: updatedPlayers,
             current_turn_player_id: nextPlayerId,
+            updated_at: new Date().toISOString(),
             last_action_msg: `SISTA KORTET VAR ${card.label}! Måste plocka upp högen.`,
           })
           .eq("room_code", room.room_code);
@@ -489,6 +498,7 @@ export default function VandtiaPage() {
           pile: burn ? [] : newPile,
           players: updatedPlayers,
           current_turn_player_id: nextId,
+          updated_at: new Date().toISOString(),
           game_state: isWinner ? "finished" : "playing",
           winner_name: isWinner ? me.name : null,
           last_action_msg: `DOLT KORT LYCKADES: ${card.label}!`,
@@ -514,6 +524,7 @@ export default function VandtiaPage() {
               (room.players.findIndex((p: any) => p.id === myId) + 1) %
                 room.players.length
             ].id,
+          updated_at: new Date().toISOString(),
           last_action_msg: `MISSLYCKAT DOLT KORT: ${card.label}`,
         })
         .eq("room_code", room.room_code);
@@ -548,6 +559,7 @@ export default function VandtiaPage() {
           pile: burn ? [] : newPile,
           deck: newDeck,
           current_turn_player_id: nextId,
+          updated_at: new Date().toISOString(),
           last_action_msg: `LYCKAD CHANS: ${card.label}!`,
         })
         .eq("room_code", room.room_code);
@@ -568,6 +580,7 @@ export default function VandtiaPage() {
               (room.players.findIndex((p: any) => p.id === myId) + 1) %
                 room.players.length
             ].id,
+          updated_at: new Date().toISOString(),
           last_action_msg: `CHANS MISSLYCKADES (${card.label})`,
         })
         .eq("room_code", room.room_code);
@@ -589,6 +602,7 @@ export default function VandtiaPage() {
             (room.players.findIndex((p: any) => p.id === myId) + 1) %
               room.players.length
           ].id,
+        updated_at: new Date().toISOString(),
       })
       .eq("room_code", room.room_code);
   };
