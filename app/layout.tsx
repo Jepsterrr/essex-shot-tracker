@@ -5,6 +5,8 @@ import Header from "./components/Navbar";
 import UsePwaInputFocusFix from "./components/UsePwaInputFocusFix";
 import OfflineSyncManager from "./components/OfflineSyncManager";
 import { Toaster } from "react-hot-toast";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const ebGaramond = EB_Garamond({
@@ -62,6 +64,9 @@ export default function RootLayout({
         <Header />
         <UsePwaInputFocusFix />
         <main className="container mx-auto p-4 pt-24 md:p-8 md:pt-64">{children}</main>
+
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
