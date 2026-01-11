@@ -193,6 +193,19 @@ export default function VandtiaPage() {
     };
   }, [inRoom, roomInput, leaveRoom, router]);
 
+  useEffect(() => {
+  if (room?.current_turn_player_id) {
+    const activeElem = document.getElementById(`player-${room.current_turn_player_id}`);
+    if (activeElem) {
+      activeElem.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }
+}, [room?.current_turn_player_id]);
+
   const handleJoin = async () => {
     if (!name || !roomInput) return;
     const code = roomInput.toUpperCase();
@@ -701,58 +714,73 @@ export default function VandtiaPage() {
           </span>
         </div>
 
-        <div className="flex-grow w-full flex flex-col justify-between relative">
+        <div className="flex-grow w-full flex flex-col justify-start relative">
           {/* Motståndare */}
-          <div className="flex justify-center gap-3 px-4 min-h-[80px] w-full mt-1">
-            {others.map((p: any) => (
-              <div
-                key={p.id}
-                className={`flex flex-col items-center transition-all ${
-                  room.current_turn_player_id === p.id
-                    ? "scale-105 opacity-100"
-                    : "opacity-40"
-                }`}
-              >
-                <div className="flex gap-2 mb-1">
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="relative w-10 h-14 bg-black/20 rounded border border-white/10 flex items-center justify-center"
-                    >
-                      {/* 1. Underst: Det dolda kortet (Face down) */}
-                      {p.face_down && p.face_down[i] && (
-                        <div className="absolute inset-0 z-0">
-                          <CardView
-                            card={null}
-                            small
-                            hidden
-                            noMargin
-                            isOpponent
-                          />
-                        </div>
-                      )}
-                      {p.face_up && p.face_up[i] && (
-                        <div className="absolute inset-0 z-10">
-                          <CardView
-                            card={p.face_up[i]}
-                            small
-                            noMargin
-                            isOpponent
-                          />
-                        </div>
-                      )}
+          <div 
+            className="flex w-full overflow-x-auto overflow-y-hidden no-scrollbar snap-x snap-mandatory gap-7 px-10 justify-start sm:justify-center"
+            style={{ scrollPadding: "0 40px" }}
+          >
+            {others.map((p: any) => {
+              const isActive = room.current_turn_player_id === p.id;
+              return (
+                <div
+                  key={p.id}
+                  id={`player-${p.id}`}
+                  className={`flex flex-col items-center snap-center shrink-0 transition-all duration-500 ${
+                    isActive
+                      ? "scale-105 opacity-100"
+                      : "opacity-40"
+                  }`}
+                >
+                  {/* Namnbricka */}
+                  <div className={`mb-1 mt-2 px-3 py-0.5 rounded-full border transition-colors ${
+                    isActive ? "bg-[#d4af37] border-[#d4af37] text-black" : "border-white/10 text-[#d4af37]/60"
+                  }`}>
+                    <span className="text-[9px] font-black uppercase tracking-tighter">
+                      {p.name}
+                    </span>
+                  </div>
 
-                      {/* Om platsen är helt tom visas bara den mörka boxen ovan */}
-                    </div>
-                  ))}
+                  <div className="flex gap-2 mb-1 relative">
+                    {[0, 1, 2].map((i) => (
+                      <div
+                        key={i}
+                        className="relative w-9 h-20 bg-black/40 rounded border border-white/10 shadow-2xl"
+                      >
+                        {/* Underst, Det dolda kortet (Face down) */}
+                        {p.face_down && p.face_down[i] && (
+                          <div className="absolute inset-0 z-0">
+                            <CardView
+                              card={null}
+                              small
+                              hidden
+                              noMargin
+                              isOpponent
+                            />
+                          </div>
+                        )}
+                        {p.face_up && p.face_up[i] && (
+                          <div className="absolute inset-0 z-10">
+                            <CardView
+                              card={p.face_up[i]}
+                              small
+                              noMargin
+                              isOpponent
+                            />
+                          </div>
+                        )}
+
+                        {/* Om platsen är helt tom visas bara den mörka boxen ovan */}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="absolute -right-3 -bottom-0 bg-zinc-900 border border-white/20 rounded-full w-5 h-5 flex items-center justify-center z-30 shadow-lg">
+                    <span className="text-[9px] font-bold text-white">{p.hand.length}</span>
+                  </div>
                 </div>
-
-                <span className="text-[0.6rem] font-black text-[#d4af37] uppercase text-center leading-tight mt-6">
-                  {p.name}
-                  <br />({p.hand.length} PÅ HAND)
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Center - spelyta */}
