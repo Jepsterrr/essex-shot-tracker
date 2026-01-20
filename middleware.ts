@@ -19,7 +19,6 @@ export async function middleware(request: NextRequest) {
   if (session.isLoggedIn && !isLoginPage) {
     // Hämta versionen från Edge Config
     const latestPasswordVersion = await get<string>("password_version");
-    console.log("Middleware hämtade version:", latestPasswordVersion);
 
     // Om versionen i kakan är gammal, logga ut
     if (latestPasswordVersion && session.passwordVersion !== latestPasswordVersion) {
