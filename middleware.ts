@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getIronSession } from "iron-session";
 import { sessionOptions, SessionData } from "./lib/session";
-import { supabase } from "./lib/supabase-client";
+import { get } from "@vercel/edge-config";
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
@@ -17,18 +17,12 @@ export async function middleware(request: NextRequest) {
   const isLoginPage = pathname === "/login";
 
   if (session.isLoggedIn && !isLoginPage) {
-    // Hämta den globala versionen från DB
-    const { data, error } = await supabase
-      .from("app_config")
-      .select("value")
-      .eq("key", "password_version")
-      .single();
+    // Hämta versionen från Edge Config
+    const latestPasswordVersion = await get<string>("password_version");
+    console.log("Middleware hämtade version:", latestPasswordVersion);
 
     // Om versionen i kakan är gammal, logga ut
-    if (!error && data?.value && session.passwordVersion !== data.value) {
-      session.isLoggedIn = false;
-      session.passwordVersion = "";
-      
+    if (latestPasswordVersion && session.passwordVersion !== latestPasswordVersion) {
       session.destroy();
       const redirectResponse = NextResponse.redirect(new URL("/login", request.url));
       const destroyedSession = await getIronSession<SessionData>(request, redirectResponse, sessionOptions);
