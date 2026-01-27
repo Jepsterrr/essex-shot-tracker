@@ -20,22 +20,39 @@ En modern Progressive Web App (PWA) byggd för att hålla koll på straffshots i
     * Aktuell ställning ("Skulden").
     * Uppdelning mellan KEX och ESS.
     * Topplistor för "Mest straffade", "Flitigaste drickaren", och "Strängaste domaren".
+* **Spelhall (Arcade):** Integrerade spel för att avgöra nästa shot:
+    * **Blackjack:** Klassiskt kortspel mot dealern.
+    * **Hot Phone:** En digital variant av "heta potaten".
+    * **Unlucky Wheel:** Lyckohjul för att slumpa fram straff.
+    * **Dice & Shithead/Vändtia:** Tärningsspel och Skitgubbe/Vändtia.
 * **Detaljerad Historik:** Sökbar och paginerad logg över alla händelser.
 * **Personlig Profil:** Klicka på en medlem för att se deras specifika historik och statistik.
 
 ### Admin & Hantering
-* **Medlemshantering:** Lägg till, redigera, arkivera eller radera medlemmar.
+* **Medlemshantering:** Lägg till, redigera, arkivera eller radera medlemmar
 * **Vittneshantering:** Hantera listan över externa vittnen.
-* **Säkerhet:** Autentisering krävs för att komma åt admin-funktionerna.
+* **Lösenordsbyte:** Byt lösenord för hemsidan och förgående inloggade loggas ut.
+* **Säkerhet & Åtkomst:** Hela applikationen är skyddad av ett gemensamt lösenord via `iron-session`.
 
-Teknisk Översikt
+## Teknisk Översikt
 
 * **Frontend:** [Next.js](https://nextjs.org/) (App Router)
 * **Språk:** TypeScript
 * **Styling:** Tailwind CSS + Headless UI
 * **Backend / Databas:** [Supabase](https://supabase.com/) (PostgreSQL)
 * **Statemanagement:** React Hooks & LocalStorage (för offline-kö)
-* **Notifikationer:** `react-hot-toast`
+* **Monitorering:** Vercel Analytics & Speed Insights för prestandamätning
+
+## Projektstruktur
+
+```text
+/app         # Next.js App Router (Sidor och API-routes)
+/components  # Återanvändbara UI-komponenter
+/hooks       # Custom hooks för offline-logik och data
+/lib         # Hjälpfunktioner, sessioner och Supabase-konfig
+/public      # Bilder, manifest och PWA-ikoner
+/types       # Delade TypeScript-definitioner
+```
 
 
 ## Komma igång
@@ -43,7 +60,7 @@ För att köra projektet lokalt, följ dessa steg:
 
 1. Klona repot
   ```bash
-  git clone [https://github.com/Jepsterrr/essex-shot-tracker.git](https://github.com/Jepsterrr/essex-shot-tracker.git)
+  git clone https://github.com/Jepsterrr/essex-shot-tracker.git
   cd essex-shot-tracker
   ```
 2. Installera beroenden
@@ -61,6 +78,14 @@ Skapa en fil vid namn .env i roten av projektet och lägg till dina Supabase-nyc
 NEXT_PUBLIC_SUPABASE_URL=din-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=din-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=din-supabase-service-role-key
+
+EDGE_CONFIG=din-edge-config-url
+EDGE_CONFIG_ID=din-edge-config-id
+VERCEL_ACCESS_TOKEN=din-vercel-access-token
+
+IRON_SESSION_SECRET=din-iron-session-secret
+SITE_PASSWORD_HASH=ditt-hashade-lösenord
+PASSWORD_COOKIE_NAME=ditt-cookie-namn
 ```
 SUPABASE_SERVICE_ROLE_KEY behövs för att hantera data säkert från serversidan via API-anropen.
 
