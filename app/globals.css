@@ -47,8 +47,8 @@ main {
   background: #0f172a;
   background-image: url("/felt-texture.png");
   background-repeat: repeat;
-  min-height: 100vh;
-  min-width: 100vw;
+  min-height: 100dvh;
+  width: 100%;
 }
 
 input,
