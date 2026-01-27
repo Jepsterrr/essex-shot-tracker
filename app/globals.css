@@ -191,6 +191,11 @@ main, .container, .max-w-3xl {
   pointer-events: none;
 }
 
+header, .navbar {
+  background-color: #000000;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 .mobile-overlay {
   position: fixed;
   top: 0;

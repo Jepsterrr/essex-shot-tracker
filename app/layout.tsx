@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, EB_Garamond } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Navbar";
@@ -15,9 +15,20 @@ const ebGaramond = EB_Garamond({
   variable: "--font-eb-garamond",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
   title: "Essex Straffshot",
   description: "Håller koll på allas straffshots!",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+  }
 };
 
 export default function RootLayout({
