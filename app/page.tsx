@@ -1,18 +1,44 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import ShotTrackerForm from "./components/ShotTrackerForm";
+import dynamic from "next/dynamic";
+import { unstable_cache } from "next/cache";
+import { memberSchema, witnessSchema, shotLogSchema } from "@/lib/validations";
 import type { Member, Witness, LogItem } from "@/types/types";
+import Loading from "./loading";
 
-export default async function HomePage() {
-  const [membersRes, witnessesRes, logsRes] = await Promise.all([
-    supabaseAdmin
+const ShotTrackerForm = dynamic(() => import("./components/ShotTrackerForm"), {
+  loading: Loading,
+  ssr: true,
+});
+
+const getCachedMembers = unstable_cache(
+  async () => {
+    const { data } = await supabaseAdmin
       .from("members")
       .select("*")
       .eq("is_active", true)
-      .order("name"),
-    supabaseAdmin
+      .order("name");
+    return memberSchema.array().parse(data || []);
+  },
+  ["active-members"],
+  { revalidate: 60 },
+);
+
+const getCachedWitnesses = unstable_cache(
+  async () => {
+    const { data } = await supabaseAdmin
       .from("witnesses")
       .select("*")
-      .order("name"),
+      .order("name");
+    return witnessSchema.array().parse(data || []);
+  },
+  ["witnesses-list"],
+  { revalidate: 60 },
+);
+
+export default async function HomePage() {
+  const [members, witnesses, logsRes] = await Promise.all([
+    getCachedMembers(),
+    getCachedWitnesses(),
     supabaseAdmin
       .from("shot_log")
       .select("*")
@@ -20,12 +46,14 @@ export default async function HomePage() {
       .limit(15),
   ]);
 
-  const fetchedMembers: Member[] = membersRes.data || [];
-  const externalWitnesses: Witness[] = witnessesRes.data || [];
-  const initialLogs: LogItem[] = logsRes.data || [];
+  const fetchedMembers: Member[] = members || [];
+  const externalWitnesses: Witness[] = witnesses || [];
+  const initialLogs: LogItem[] = shotLogSchema
+    .array()
+    .parse(logsRes.data || []);
 
   const membersWhoCanWitness = fetchedMembers.filter((m) =>
-    ["ESS", "Joker"].includes(m.group_type)
+    ["ESS", "Joker"].includes(m.group_type),
   );
   const memberWitnesses: Witness[] = membersWhoCanWitness.map((m) => ({
     id: m.id,
@@ -33,7 +61,7 @@ export default async function HomePage() {
   }));
   const combined = [...externalWitnesses, ...memberWitnesses];
   const uniqueWitnesses = Array.from(
-    new Map(combined.map((item) => [item.name, item])).values()
+    new Map(combined.map((item) => [item.name, item])).values(),
   ).sort((a, b) => a.name.localeCompare(b.name));
 
   return (

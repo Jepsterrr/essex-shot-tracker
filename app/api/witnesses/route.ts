@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { witnessSchema } from "@/lib/validations";
 
 // POST för att skapa ett nytt vittne
 export async function POST(request: Request) {
@@ -11,25 +13,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { name } = await request.json();
-    if (!name) {
-      return new Response(JSON.stringify({ error: "Name is required" }), {
-        status: 400,
-      });
-    }
-    const { error } = await supabaseAdmin.from("witnesses").insert({ name });
-    if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-      });
-    }
-    return new Response(JSON.stringify({ message: "Witness created" }), {
-      status: 201,
-    });
-  } catch (_err) {
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
-      status: 500,
-    });
+    const body = await request.json();
+    const result = witnessSchema.pick({ name: true }).safeParse(body);
+
+    if (!result.success)
+      return NextResponse.json({ error: "Namn krävs" }, { status: 400 });
+
+    const { error } = await supabaseAdmin.from("witnesses").insert(result.data);
+    if (error)
+      return NextResponse.json({ error: error.message }, { status: 500 });
+
+    return NextResponse.json({ message: "Vittne skapat" }, { status: 201 });
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -50,7 +49,10 @@ export async function DELETE(request: Request) {
         status: 400,
       });
     }
-    const { error } = await supabaseAdmin.from("witnesses").delete().eq("id", id);
+    const { error } = await supabaseAdmin
+      .from("witnesses")
+      .delete()
+      .eq("id", id);
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
@@ -80,7 +82,7 @@ export async function PUT(request: Request) {
     if (!id || !newName) {
       return new Response(
         JSON.stringify({ error: "ID and newName are required" }),
-        { status: 400 }
+        { status: 400 },
       );
     }
     const { error } = await supabaseAdmin

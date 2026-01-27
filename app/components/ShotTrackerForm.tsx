@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
-import { supabase } from "@/lib/supabase-client";
 import type { Member, Witness, LogItem } from "@/types/types";
 import toast from "react-hot-toast";
-import { addToQueue, cacheData } from "@/lib/offline-queue";
+import { addToQueue } from "@/lib/offline-queue";
 import { motion, AnimatePresence } from "framer-motion";
+import { useOfflineStatus } from "@/hooks/use-offline-status";
+import { useShotTrackerData } from "@/hooks/use-shot-tracker-data";
 
 interface Props {
   initialMembers: Member[];
@@ -18,13 +19,16 @@ export default function ShotTrackerForm({
   initialWitnesses,
   initialLogs,
 }: Props) {
-  // State initieras direkt från server-props
-  const [members, setMembers] = useState<Member[]>(initialMembers);
-  const [allWitnessOptions, setAllWitnessOptions] = useState<Witness[]>(initialWitnesses);
-  const [recentLogs, setRecentLogs] = useState<LogItem[]>(initialLogs);
+  // Hooks
+  const isOfflineMode = useOfflineStatus();
+  const { members, allWitnessOptions, recentLogs } = useShotTrackerData(
+    initialMembers,
+    initialWitnesses,
+    initialLogs,
+  );
 
+  // State initieras direkt från server-props
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
-  const [isOfflineMode, setIsOfflineMode] = useState(false);
 
   // UI State
   const [changeType, setChangeType] = useState<"add" | "remove">("add");
@@ -36,96 +40,6 @@ export default function ShotTrackerForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [shake, setShake] = useState(false);
   const [direction, setDirection] = useState(0);
-
-  useEffect(() => {
-    const handleStatusChange = () => {
-      setIsOfflineMode(!navigator.onLine);
-    };
-
-    if (typeof navigator !== "undefined") {
-      setIsOfflineMode(!navigator.onLine);
-    }
-
-    window.addEventListener("online", handleStatusChange);
-    window.addEventListener("offline", handleStatusChange);
-    return () => {
-      window.removeEventListener("online", handleStatusChange);
-      window.removeEventListener("offline", handleStatusChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel(`live-updates-${Date.now()}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "members" },
-        (payload) => {
-          // Uppdatera medlemslistan
-          setMembers((current) => {
-            let updated = [...current];
-            if (payload.eventType === "INSERT") {
-              const m = payload.new as Member;
-              if (m.is_active && !updated.find((x) => x.id === m.id))
-                updated.push(m);
-            } else if (payload.eventType === "UPDATE") {
-              const m = payload.new as Member;
-              updated = m.is_active
-                ? updated.map((x) => (x.id === m.id ? m : x))
-                : updated.filter((x) => x.id !== m.id);
-            } else if (payload.eventType === "DELETE") {
-              updated = updated.filter((x) => x.id !== payload.old.id);
-            }
-            const sorted = updated.sort((a, b) => a.name.localeCompare(b.name));
-
-            // Uppdatera offline-cachen för medlemmar
-            cacheData(sorted, allWitnessOptions);
-            return sorted;
-          });
-
-          // Uppdatera vittneslistan i realtid (viktigt!)
-          setAllWitnessOptions((currentWitnesses) => {
-            const shouldBeWitness = (m: any) =>
-              m.is_active && ["ESS", "Joker"].includes(m.group_type);
-            let updated = [...currentWitnesses];
-
-            if (
-              payload.eventType === "INSERT" ||
-              payload.eventType === "UPDATE"
-            ) {
-              const m = payload.new as any;
-              if (shouldBeWitness(m)) {
-                const exists = updated.findIndex((w) => w.id === m.id);
-                if (exists >= 0) updated[exists] = { id: m.id, name: m.name };
-                else updated.push({ id: m.id, name: m.name });
-              } else {
-                updated = updated.filter((w) => w.id !== m.id);
-              }
-            } else if (payload.eventType === "DELETE") {
-              updated = updated.filter((w) => w.id !== payload.old.id);
-            }
-
-            const sortedWitnesses = updated.sort((a, b) =>
-              a.name.localeCompare(b.name),
-            );
-            return sortedWitnesses;
-          });
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "shot_log" },
-        (payload) => {
-          const newLog = payload.new as LogItem;
-          setRecentLogs((prev) => [newLog, ...prev].slice(0, 15));
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [allWitnessOptions]);
 
   useEffect(() => {
     window.scrollTo(0, 0);

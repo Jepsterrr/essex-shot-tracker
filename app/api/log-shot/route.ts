@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { logShotRequestSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -12,15 +13,17 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { member_id, change, reason, witnesses, group_type, giver_ids } =
-      body;
+    const result = logShotRequestSchema.safeParse(body);
 
-    if (!member_id || typeof change !== "number" || !group_type) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: "member_id, change, and group_type are required" },
-        { status: 400 }
+        { error: "Felaktig data", details: result.error.format() },
+        { status: 400 },
       );
     }
+
+    const { member_id, change, reason, witnesses, group_type, giver_ids } =
+      result.data;
 
     const { error } = await supabaseAdmin.rpc("handle_new_shot_log", {
       member_uuid: member_id,
@@ -46,13 +49,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { success: true, logId: latestLog?.id },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("API Error:", err);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
