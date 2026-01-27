@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   description: "Håller koll på allas straffshots!",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "black",
   }
 };
 
