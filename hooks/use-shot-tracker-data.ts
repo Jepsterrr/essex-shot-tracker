@@ -76,7 +76,7 @@ export function useShotTrackerData(
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [allWitnessOptions]);
+  }, []);
 
   return { members, allWitnessOptions, recentLogs, setRecentLogs };
 }

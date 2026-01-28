@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import bcrypt from "bcrypt";
+import { changePasswordSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -11,15 +12,17 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { newPassword } = await request.json();
+    const body = await request.json();
+    const result = changePasswordSchema.safeParse(body);
 
-    if (!newPassword || newPassword.trim().length < 8) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: "Lösenordet måste vara minst 8 tecken långt" },
+        { error: result.error.issues[0].message },
         { status: 400 }
       );
     }
 
+    const { newPassword } = result.data;
     const hashedNewPassword = await bcrypt.hash(newPassword.trim(), 12);
     const newVersion = Date.now().toString();
 

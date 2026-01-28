@@ -38,12 +38,19 @@ export const joinedShotLogSchema = z.object({
 });
 
 export const logShotRequestSchema = z.object({
-  member_id: z.uuid("Ogiltigt medlems-ID"),
+  member_ids: z.array(z.uuid("Ogiltigt medlems-ID")).min(1, "Välj minst en medlem"),
   change: z.number().int(),
   reason: z.string().max(255, "Anledningen är för lång").optional(),
   witnesses: z.array(z.string()),
-  group_type: z.string(),
   giver_ids: z.array(z.uuid())
+});
+
+export const loginSchema = z.object({
+  password: z.string().min(1, "Lösenord krävs")
+});
+
+export const changePasswordSchema = z.object({
+  newPassword: z.string().min(8, "Lösenordet måste vara minst 8 tecken")
 });
 
 export type Member = z.infer<typeof memberSchema>;

@@ -2,11 +2,22 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import bcrypt from "bcrypt";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { loginSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
+    const body = await request.json();
+    const result = loginSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error.issues[0].message },
+        { status: 400 }
+      );
+    }
+
+    const { password } = result.data;
     const session = await getSession();
-    const { password } = await request.json();
 
     // const sitePasswordHash = process.env.SITE_PASSWORD_HASH;
 

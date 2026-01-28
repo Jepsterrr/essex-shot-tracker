@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { witnessSchema } from "@/lib/validations";
+import { z } from "zod";
 
 // POST för att skapa ett nytt vittne
 export async function POST(request: Request) {
@@ -42,23 +43,23 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-    if (!id) {
-      return new Response(JSON.stringify({ error: "Witness ID is required" }), {
-        status: 400,
-      });
-    }
+    const id = new URL(request.url).searchParams.get("id");
+    const idResult = z.uuid().safeParse(id);
+
+    if (!idResult.success)
+      return NextResponse.json({ error: "Ogiltigt ID" }, { status: 400 });
+
     const { error } = await supabaseAdmin
       .from("witnesses")
       .delete()
-      .eq("id", id);
+      .eq("id", idResult.data);
+
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
       });
     }
-    return new Response(JSON.stringify({ message: "Witness deleted" }), {
+    return new Response(JSON.stringify({ message: "Vittne raderat" }), {
       status: 200,
     });
   } catch (_err) {
@@ -78,23 +79,22 @@ export async function PUT(request: Request) {
   }
 
   try {
-    const { id, newName } = await request.json();
-    if (!id || !newName) {
-      return new Response(
-        JSON.stringify({ error: "ID and newName are required" }),
-        { status: 400 },
-      );
-    }
+    const body = await request.json();
+    const result = witnessSchema.pick({ id: true, name: true }).safeParse(body);
+
+    if (!result.success)
+      return NextResponse.json({ error: "ID och namn krävs" }, { status: 400 });
+
     const { error } = await supabaseAdmin
       .from("witnesses")
-      .update({ name: newName })
-      .eq("id", id);
+      .update({ name: result.data.name })
+      .eq("id", result.data.id);
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
       });
     }
-    return new Response(JSON.stringify({ message: "Witness updated" }), {
+    return new Response(JSON.stringify({ message: "Vittne uppdaterat" }), {
       status: 200,
     });
   } catch (_err) {

@@ -22,33 +22,26 @@ export async function POST(request: Request) {
       );
     }
 
-    const { member_id, change, reason, witnesses, group_type, giver_ids } =
+    const { member_ids, change, reason, witnesses, giver_ids } =
       result.data;
 
-    const { error } = await supabaseAdmin.rpc("handle_new_shot_log", {
-      member_uuid: member_id,
-      change_amount: change,
-      reason_text: reason,
-      witnesses_json: witnesses,
-      log_group_type: group_type,
-      p_giver_ids: giver_ids,
-    });
+    const { data: logIds, error } = await supabaseAdmin.rpc(
+      "handle_new_shot_logs",
+      {
+        p_member_ids: member_ids,
+        p_change_amount: change,
+        p_reason_text: reason ?? "",
+        p_witnesses_json: witnesses,
+        p_giver_ids: giver_ids,
+      },
+    );
 
     if (error) {
-      console.error("Supabase RPC error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const { data: latestLog } = await supabaseAdmin
-      .from("shot_log")
-      .select("id")
-      .eq("member_id", member_id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
     return NextResponse.json(
-      { success: true, logId: latestLog?.id },
+      { success: true, logIds: logIds },
       { status: 200 },
     );
   } catch (err) {

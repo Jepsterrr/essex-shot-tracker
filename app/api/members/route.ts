@@ -48,23 +48,21 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+    const id = new URL(request.url).searchParams.get("id");
+    const idResult = z.uuid().safeParse(id);
 
-    if (!id) {
-      return NextResponse.json(
-        { error: "Member ID is required" },
-        { status: 400 },
-      );
-    }
+    if (!idResult.success)
+      return NextResponse.json({ error: "Ogiltigt ID" }, { status: 400 });
 
-    const { error } = await supabaseAdmin.from("members").delete().eq("id", id);
+    const { error } = await supabaseAdmin
+      .from("members")
+      .delete()
+      .eq("id", idResult.data);
 
-    if (error) {
+    if (error)
       return NextResponse.json({ error: error.message }, { status: 500 });
-    }
 
-    return NextResponse.json({ message: "Member deleted" }, { status: 200 });
+    return NextResponse.json({ message: "Medlem raderad" }, { status: 200 });
   } catch (_err) {
     return NextResponse.json(
       { error: "Internal Server Error" },
@@ -83,9 +81,7 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const result = z
-      .object({ id: z.uuid(), is_active: z.boolean() })
-      .safeParse(body);
+    const result = memberSchema.pick({ id: true, is_active: true }).safeParse(body);
 
     if (!result.success)
       return NextResponse.json({ error: "Ogiltig data" }, { status: 400 });
@@ -115,18 +111,15 @@ export async function PUT(request: Request) {
   }
 
   try {
-    const { id, newName, newGroup } = await request.json();
-    if (!id || !newName || !newGroup) {
-      return new Response(
-        JSON.stringify({ error: "ID, newName, and newGroup are required" }),
-        { status: 400 },
-      );
-    }
+    const body = await request.json();
+    const result = memberSchema.pick({ id: true, name: true, group_type: true }).safeParse(body);
+
+    if (!result.success) return NextResponse.json({ error: "Namn och grupp krävs" }, { status: 400 });
 
     const { error } = await supabaseAdmin
       .from("members")
-      .update({ name: newName, group_type: newGroup })
-      .eq("id", id);
+      .update({ name: result.data.name, group_type: result.data.group_type })
+      .eq("id", result.data.id);
 
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
@@ -134,7 +127,7 @@ export async function PUT(request: Request) {
       });
     }
 
-    return new Response(JSON.stringify({ message: "Member updated" }), {
+    return new Response(JSON.stringify({ message: "Medlem uppdaterad" }), {
       status: 200,
     });
   } catch (_err) {

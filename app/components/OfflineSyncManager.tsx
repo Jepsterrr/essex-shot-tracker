@@ -22,7 +22,10 @@ export default function OfflineSyncManager() {
           const res = await fetch("/api/log-shot", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(item.payload),
+            body: JSON.stringify({
+              ...item.payload,
+              member_ids: item.payload.member_ids || [item.payload.member_id] 
+            }),
           });
 
           if (res.ok) {

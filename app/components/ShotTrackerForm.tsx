@@ -120,128 +120,54 @@ export default function ShotTrackerForm({
       finalWitnesses.push(`Övrig: ${otherWitnessValue.trim()}`);
     }
 
-    const createdLogIds: string[] = [];
-    let errorCount = 0;
-    let queuedCount = 0;
+    const payload = {
+      member_ids: selectedMemberIds,
+      change: changeAmount,
+      reason: reason || "",
+      witnesses: finalWitnesses,
+      giver_ids: changeType === "add" ? giverIds : [],
+    };
 
+    // Offline
     if (!navigator.onLine) {
-      selectedMemberIds.forEach((memberId) => {
-        const selectedMember = members.find((m) => m.id === memberId);
-        if (!selectedMember) return;
-
-        const payload = {
-          member_id: memberId,
-          change: changeAmount,
-          reason,
-          witnesses: finalWitnesses,
-          group_type: selectedMember.group_type,
-          giver_ids: changeType === "add" ? giverIds : [],
-        };
-
-        addToQueue(payload);
-      });
-
+      addToQueue(payload);
       setIsSubmitting(false);
       resetForm();
-      toast.success(
-        "Du är offline! Sparade straffen i kön. De skickas så fort du får nät igen.",
-        {
-          style: {
-            background: "#333",
-            color: "#fff",
-            border: "1px solid #d4af37",
-          },
-        },
-      );
+      toast.success("Du är offline! Sparade straffen i kön. De skickas så fort du får nät igen.", {
+        style: { background: "#333", color: "#fff", border: "1px solid #d4af37" },
+      });
       return;
-    }
+    };
 
-    const promises = selectedMemberIds.map(async (memberId) => {
-      const selectedMember = members.find((m) => m.id === memberId);
-      if (!selectedMember) return;
-
-      const payload = {
-        member_id: memberId,
-        change: changeAmount,
-        reason,
-        witnesses: finalWitnesses,
-        group_type: selectedMember.group_type,
-        giver_ids: changeType === "add" ? giverIds : [],
-      };
-
-      let response;
-
-      try {
-        response = await fetch("/api/log-shot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-      } catch (err) {
-        console.error("Nätverksfel (fetch throw):", err);
-        addToQueue(payload);
-        queuedCount++;
-        return;
-      }
+    // Online
+    try {
+      const response = await fetch("/api/log-shot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       if (!response.ok) {
-        console.error("Serverfel status:", response.status);
-        errorCount++;
-        return;
+        throw new Error("Serverfel");
       }
 
-      try {
-        const data = await response.json();
-        if (data.logId) createdLogIds.push(data.logId);
-      } catch (jsonError) {
-        console.error("Kunde inte tolka JSON-svar:", jsonError);
-        errorCount++;
-      }
-    });
+      const data = await response.json();
+      const createdLogIds = data.logIds || [];
 
-    await Promise.all(promises);
+      const affectedNames = selectedMemberIds.length === 1 
+        ? members.find(m => m.id === selectedMemberIds[0])?.name 
+        : `${selectedMemberIds.length} personer`;
 
-    setIsSubmitting(false);
-
-    if (errorCount > 0) {
-      toast.error(
-        `Lyckades med ${createdLogIds.length}, Köade: ${queuedCount}, Misslyckades: ${errorCount}`,
-      );
-    } else if (queuedCount > 0 && createdLogIds.length) {
-      resetForm();
-      toast.success("Nätverket svajade! Sparade allt i offline-kön.");
-    } else if (queuedCount > 0) {
-      resetForm();
-      toast.success(
-        `${createdLogIds.length} sparade, ${queuedCount} köade pga nätverk.`,
-      );
-    } else {
-      const affectedMembers = members.filter((m) =>
-        selectedMemberIds.includes(m.id),
-      );
-      let namesString = "";
-
-      if (affectedMembers.length === 1) {
-        namesString = affectedMembers[0].name;
-      } else if (affectedMembers.length === 2) {
-        namesString = `${affectedMembers[0].name} & ${affectedMembers[1].name}`;
-      } else {
-        namesString = `${affectedMembers.length} personer`;
-      }
-
-      const toastMessage =
-        changeType === "add"
-          ? `${amount} shots utdelat till ${namesString}`
-          : `Skål! ${namesString} drack ${amount}`;
-
+      const toastMessage = changeType === "add"
+        ? `${amount} shots utdelat till ${affectedNames}`
+        : `Skål! ${affectedNames} drack ${amount}`;
+      
       resetForm();
 
       toast(
         (t) => (
           <div className="flex items-center gap-4">
-            <div className="flex flex-col">
-              <span className="font-bold">{toastMessage}</span>
-            </div>
+            <span className="font-bold">{toastMessage}</span>
             <button
               onClick={() => {
                 toast.dismiss(t.id);
@@ -253,14 +179,15 @@ export default function ShotTrackerForm({
             </button>
           </div>
         ),
-        {
-          style: {
-            background: "#333",
-            color: "#fff",
-            border: "1px solid #d4af37",
-          },
-        },
+        { style: { background: "#333", color: "#fff", border: "1px solid #d4af37" } }
       );
+    } catch (err) {
+      console.error("Sync error:", err);
+      addToQueue(payload);
+      toast.error("Nätverksfel! Sparade i offline-kön.");
+      resetForm();
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
