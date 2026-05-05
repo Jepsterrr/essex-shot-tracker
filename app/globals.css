@@ -31,7 +31,10 @@ html, body, #__next {
 }
 
 body {
-  background: #000000;
+  background: #0f172a;
+  background-image: url("/felt-texture.png");
+  background-repeat: repeat;
+  
   color: var(--foreground);
 
   -webkit-user-select: none;
@@ -44,9 +47,6 @@ body {
 }
 
 main {
-  background: #0f172a;
-  background-image: url("/felt-texture.png");
-  background-repeat: repeat;
   min-height: 100dvh;
   width: 100%;
 }
