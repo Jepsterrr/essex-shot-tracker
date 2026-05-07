@@ -30,11 +30,15 @@ html, body, #__next {
   -webkit-overflow-scrolling: touch;
 }
 
+html {
+  background-color: #000;
+}
+
 body {
   background: #0f172a;
   background-image: url("/felt-texture.png");
   background-repeat: repeat;
-  
+  background-attachment: fixed;
   color: var(--foreground);
 
   -webkit-user-select: none;
@@ -174,8 +178,8 @@ main, .container, .max-w-3xl {
 
 /* Safe area insets för iOS */
 .site-header {
-  padding-top: constant(safe-area-inset-top);
-  padding-top: env(safe-area-inset-top);
+  padding-top: constant(safe-area-inset-top, 0px);
+  padding-top: env(safe-area-inset-top, 0px);
   margin-top: 0;
   top: 0;
   z-index: 60;
@@ -190,8 +194,8 @@ main, .container, .max-w-3xl {
   top: 0;
   left: 0;
   right: 0;
-  height: constant(safe-area-inset-top);
-  height: env(safe-area-inset-top);
+  height: constant(safe-area-inset-top, 0px);
+  height: env(safe-area-inset-top, 0px);
   background: #000;
   z-index: 59;
   pointer-events: none;
