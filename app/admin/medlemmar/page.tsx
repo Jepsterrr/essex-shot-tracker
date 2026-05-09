@@ -212,8 +212,8 @@ export default function AdminMembersPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id,
-        newName: editingName.trim(),
-        newGroup: editingGroup,
+        name: editingName.trim(),
+        group_type: editingGroup,
       }),
     });
     if (res.ok) {
