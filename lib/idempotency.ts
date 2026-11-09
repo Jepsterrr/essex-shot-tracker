@@ -14,8 +14,9 @@ export type ClaimResult =
   | { claimed: true }
   | { claimed: false; status: "pending" | "done"; logIds: string[] };
 
-// Tar bort gamla nycklar så att app_config inte växer
-async function purgeExpired(): Promise<void> {
+// Tar bort gamla nycklar så att app_config inte växer. Körs från cron-jobbet och
+// returnerar antal borttagna nycklar.
+export async function purgeExpiredRequests(): Promise<number> {
   const { data } = await supabaseAdmin
     .from("app_config")
     .select("key, value")
@@ -32,8 +33,10 @@ async function purgeExpired(): Promise<void> {
     .map((row) => row.key);
 
   if (expired.length > 0) {
-    await supabaseAdmin.from("app_config").delete().in("key", expired);
+    const { error } = await supabaseAdmin.from("app_config").delete().in("key", expired);
+    if (error) throw error;
   }
+  return expired.length;
 }
 
 // Primärnyckeln på app_config gör anspråket atomiskt: bara en request kan sätta nyckeln
@@ -43,10 +46,7 @@ export async function claimRequest(requestId: string): Promise<ClaimResult> {
     .from("app_config")
     .insert({ key: keyFor(requestId), value: JSON.stringify(record) });
 
-  if (!error) {
-    purgeExpired().catch((err) => console.error("Idempotency purge failed:", err));
-    return { claimed: true };
-  }
+  if (!error) return { claimed: true };
   if (error.code !== "23505") throw error;
 
   const { data } = await supabaseAdmin
