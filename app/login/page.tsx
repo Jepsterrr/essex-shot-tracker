@@ -24,6 +24,12 @@ export default function LoginPage() {
       if (res.ok) {
         router.push("/");
         router.refresh();
+      } else if (res.status === 429) {
+        // Spärrad efter för många försök: servern anger hur länge
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "För många felaktiga försök. Försök igen senare.");
+      } else if (res.status >= 500) {
+        setError("Något gick fel på servern. Försök igen om en stund.");
       } else {
         setError("Felaktigt lösenord. Försök igen.");
       }

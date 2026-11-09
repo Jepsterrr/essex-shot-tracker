@@ -37,23 +37,26 @@ export async function POST(request: Request) {
     const { data: configs } = await supabaseAdmin
       .from("app_config")
       .select("key, value")
-      .in("key", ["admin_password_hash", "password_version"]);
+      .in("key", ["admin_password_hash", "developer_password_hash", "password_version"]);
 
-    // ADMIN_PASSWORD_HASH är en reserv som bara gäller om databasen saknar hash,
-    // annars skulle den kringgå ett lösenordsbyte
-    const sitePasswordHash =
-      configs?.find(c => c.key === "admin_password_hash")?.value ||
-      process.env.ADMIN_PASSWORD_HASH;
+    // Både admin- och developer-lösenordet gäller alltid. Developer-lösenordet påverkas
+    // inte av lösenordsbyte i admin, så det fungerar som permanent reservinloggning.
+    const passwordHashes = ["admin_password_hash", "developer_password_hash"]
+      .map(key => configs?.find(c => c.key === key)?.value)
+      .filter((hash): hash is string => Boolean(hash));
     const currentVersion = configs?.find(c => c.key === "password_version")?.value || "1";
 
-    if (!sitePasswordHash) {
+    if (passwordHashes.length === 0) {
       return NextResponse.json(
         { error: "Systemet är inte konfigurerat" },
         { status: 500 }
       );
     }
 
-    const match = await bcrypt.compare(password.trim(), sitePasswordHash);
+    const matches = await Promise.all(
+      passwordHashes.map(hash => bcrypt.compare(password.trim(), hash))
+    );
+    const match = matches.some(Boolean);
 
     if (match) {
       // Sätt datan i vår session
