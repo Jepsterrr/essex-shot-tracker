@@ -24,7 +24,9 @@ export default function OfflineSyncManager() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ...item.payload,
-              member_ids: item.payload.member_ids || [item.payload.member_id] 
+              member_ids: item.payload.member_ids || [item.payload.member_id],
+              // Poster som köades före request_id infördes får köpostens id
+              request_id: item.payload.request_id ?? item.id,
             }),
           });
 
@@ -32,6 +34,9 @@ export default function OfflineSyncManager() {
             removeFromQueue(item.id);
             successCount++;
           } else {
+            // Ej inloggad (t.ex. efter lösenordsbyte): behåll kön och försök igen efter inloggning
+            if (res.status === 401) break;
+
             if (res.status >= 400 && res.status < 500) {
               console.error(`Tog bort ogiltig post (Status ${res.status}):`, item);
               removeFromQueue(item.id);

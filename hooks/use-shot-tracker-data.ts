@@ -28,9 +28,14 @@ export function useShotTrackerData(
                 updated.push(m);
             } else if (payload.eventType === "UPDATE") {
               const m = payload.new as Member;
-              updated = m.is_active
-                ? updated.map((x) => (x.id === m.id ? m : x))
-                : updated.filter((x) => x.id !== m.id);
+              if (!m.is_active) {
+                updated = updated.filter((x) => x.id !== m.id);
+              } else if (updated.some((x) => x.id === m.id)) {
+                updated = updated.map((x) => (x.id === m.id ? m : x));
+              } else {
+                // Medlem som aktiverats på nytt
+                updated.push(m);
+              }
             } else if (payload.eventType === "DELETE") {
               updated = updated.filter((x) => x.id !== payload.old.id);
             }

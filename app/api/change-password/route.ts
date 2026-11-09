@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
+import { isAuthenticated } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import bcrypt from "bcrypt";
 import { changePasswordSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
-  const session = await getSession();
-
-  if (!session.isLoggedIn) {
+  if (!(await isAuthenticated())) {
     return NextResponse.json({ error: "Ej behörig" }, { status: 401 });
   }
 

@@ -3,6 +3,12 @@ import { getSession } from "@/lib/session";
 import bcrypt from "bcrypt";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { loginSchema } from "@/lib/validations";
+import {
+  clearLoginFailures,
+  getClientIp,
+  getLoginLockSeconds,
+  recordLoginFailure,
+} from "@/lib/login-rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -19,22 +25,25 @@ export async function POST(request: Request) {
     const { password } = result.data;
     const session = await getSession();
 
-    // const sitePasswordHash = process.env.SITE_PASSWORD_HASH;
-
-    //if (!sitePasswordHash) {
-    //  console.error("Miljövariabeln SITE_PASSWORD_HASH är inte satt.");
-    //  return NextResponse.json(
-    //    { error: "Serverkonfigurationsfel" },
-    //    { status: 500 }
-    //  );
-    //}
+    const ip = getClientIp(request);
+    const lockSeconds = await getLoginLockSeconds(ip);
+    if (lockSeconds > 0) {
+      return NextResponse.json(
+        { error: `För många felaktiga försök. Försök igen om ${Math.ceil(lockSeconds / 60)} min.` },
+        { status: 429, headers: { "Retry-After": String(lockSeconds) } }
+      );
+    }
 
     const { data: configs } = await supabaseAdmin
       .from("app_config")
       .select("key, value")
       .in("key", ["admin_password_hash", "password_version"]);
 
-    const sitePasswordHash = configs?.find(c => c.key === "admin_password_hash")?.value;
+    // ADMIN_PASSWORD_HASH är en reserv som bara gäller om databasen saknar hash,
+    // annars skulle den kringgå ett lösenordsbyte
+    const sitePasswordHash =
+      configs?.find(c => c.key === "admin_password_hash")?.value ||
+      process.env.ADMIN_PASSWORD_HASH;
     const currentVersion = configs?.find(c => c.key === "password_version")?.value || "1";
 
     if (!sitePasswordHash) {
@@ -52,10 +61,12 @@ export async function POST(request: Request) {
       session.passwordVersion = currentVersion;
       // Spara sessionen, detta krypterar och sätter kakan
       await session.save();
+      await clearLoginFailures(ip);
 
       return NextResponse.json({ message: "Inloggad!" }, { status: 200 });
     }
 
+    await recordLoginFailure(ip);
     return NextResponse.json({ error: "Ogiltigt lösenord" }, { status: 401 });
   } catch (error) {
     console.error("API Error:", error);

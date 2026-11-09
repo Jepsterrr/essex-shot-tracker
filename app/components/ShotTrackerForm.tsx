@@ -57,11 +57,14 @@ export default function ShotTrackerForm({
   const handleUndo = async (logIds: string[]) => {
     const toastId = toast.loading("Ångrar...");
     try {
-      await Promise.all(
+      const responses = await Promise.all(
         logIds.map((id) =>
           fetch(`/api/revert-shot?id=${id}`, { method: "DELETE" }),
         ),
       );
+      if (responses.some((res) => !res.ok)) {
+        throw new Error("Servern kunde inte ångra alla händelser");
+      }
       toast.success("Ångrat! Ingen skada skedd.", {
         id: toastId,
       });
@@ -126,6 +129,8 @@ export default function ShotTrackerForm({
       reason: reason || "",
       witnesses: finalWitnesses,
       giver_ids: changeType === "add" ? giverIds : [],
+      // Följer med till offline-kön så att servern kan avvisa dubbletter vid omförsök
+      request_id: crypto.randomUUID(),
     };
 
     // Offline

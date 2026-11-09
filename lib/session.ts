@@ -1,5 +1,6 @@
 import { getIronSession, IronSession, SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
+import { get } from "@vercel/edge-config";
 
 export interface SessionData {
   isLoggedIn: boolean;
@@ -24,4 +25,17 @@ export async function getSession(): Promise<IronSession<SessionData>> {
   const cookieStore = await cookies();
   const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
   return session;
+}
+
+// API-rutter ligger utanför middleware, så sessionens lösenordsversion måste kontrolleras här
+// på samma sätt som i middleware. Annars förblir gamla cookies giltiga efter lösenordsbyte.
+export async function isAuthenticated(): Promise<boolean> {
+  const session = await getSession();
+  if (!session.isLoggedIn) return false;
+
+  const latestPasswordVersion = await get<string>("password_version");
+  if (latestPasswordVersion && session.passwordVersion !== latestPasswordVersion) {
+    return false;
+  }
+  return true;
 }

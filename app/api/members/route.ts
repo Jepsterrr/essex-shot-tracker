@@ -1,13 +1,12 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
+import { isAuthenticated } from "@/lib/session";
 import { memberSchema } from "@/lib/validations";
 import { z } from "zod";
 
 // POST för att skapa en ny medlem
 export async function POST(request: Request) {
-  const session = await getSession();
-  if (!session.isLoggedIn) {
+  if (!(await isAuthenticated())) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
     });
@@ -40,8 +39,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const session = await getSession();
-  if (!session.isLoggedIn) {
+  if (!(await isAuthenticated())) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
     });
@@ -72,8 +70,7 @@ export async function DELETE(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const session = await getSession();
-  if (!session.isLoggedIn) {
+  if (!(await isAuthenticated())) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
     });
@@ -103,8 +100,7 @@ export async function PATCH(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const session = await getSession();
-  if (!session.isLoggedIn) {
+  if (!(await isAuthenticated())) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
     });

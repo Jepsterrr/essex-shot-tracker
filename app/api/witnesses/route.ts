@@ -1,13 +1,12 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
+import { isAuthenticated } from "@/lib/session";
 import { witnessSchema } from "@/lib/validations";
 import { z } from "zod";
 
 // POST för att skapa ett nytt vittne
 export async function POST(request: Request) {
-  const session = await getSession();
-  if (!session.isLoggedIn) {
+  if (!(await isAuthenticated())) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
     });
@@ -35,8 +34,7 @@ export async function POST(request: Request) {
 
 // DELETE för att ta bort ett vittne
 export async function DELETE(request: Request) {
-  const session = await getSession();
-  if (!session.isLoggedIn) {
+  if (!(await isAuthenticated())) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
     });
@@ -71,8 +69,7 @@ export async function DELETE(request: Request) {
 
 // PUT för att uppdatera ett befintligt vittne
 export async function PUT(request: Request) {
-  const session = await getSession();
-  if (!session.isLoggedIn) {
+  if (!(await isAuthenticated())) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
     });

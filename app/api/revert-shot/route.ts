@@ -1,11 +1,10 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
+import { isAuthenticated } from "@/lib/session";
 import { z } from "zod";
 
 export async function DELETE(request: Request) {
-    const session = await getSession();
-    if (!session.isLoggedIn) {
+    if (!(await isAuthenticated())) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
         });

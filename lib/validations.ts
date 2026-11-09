@@ -39,10 +39,11 @@ export const joinedShotLogSchema = z.object({
 
 export const logShotRequestSchema = z.object({
   member_ids: z.array(z.uuid("Ogiltigt medlems-ID")).min(1, "Välj minst en medlem"),
-  change: z.number().int(),
+  change: z.number().int().refine((n) => n !== 0, "Ändringen kan inte vara 0"),
   reason: z.string().max(255, "Anledningen är för lång").optional(),
   witnesses: z.array(z.string()),
-  giver_ids: z.array(z.uuid())
+  giver_ids: z.array(z.uuid()),
+  request_id: z.uuid().optional()
 });
 
 export const loginSchema = z.object({

@@ -32,8 +32,11 @@ async function getHistory(currentPage: number, query: string | undefined, logId:
 
     const memberIds = matchingMembers ? matchingMembers.map((m) => m.id) : [];
 
+    // Värdet citeras så att komma och parenteser i söktexten inte tolkas som filtersyntax
+    const quotedPattern = `"%${query.replace(/[\\"]/g, "\\$&")}%"`;
+
     const orConditions = [
-      `reason.ilike.%${query}%`,
+      `reason.ilike.${quotedPattern}`,
       ...(memberIds.length > 0
         ? [`member_id.in.(${memberIds.join(",")})`]
         : []),
