@@ -14,6 +14,13 @@ interface Props {
   initialLogs: LogItem[];
 }
 
+// Ordning och accentfärger följer Ställning-sidan
+const MEMBER_GROUPS = [
+  { type: "Kex", label: "KEX", accent: "border-amber-400" },
+  { type: "ESS", label: "ESS", accent: "border-red-400" },
+  { type: "Joker", label: "JOKER", accent: "border-purple-400" },
+] as const;
+
 export default function ShotTrackerForm({
   initialMembers,
   initialWitnesses,
@@ -239,6 +246,37 @@ export default function ShotTrackerForm({
 
   const isAddMode = changeType === "add";
 
+  // Grupper utan aktiva medlemmar (t.ex. Joker) döljs helt
+  const groupedMembers = MEMBER_GROUPS.map((group) => ({
+    ...group,
+    members: members.filter((m) => m.group_type === group.type),
+  })).filter((group) => group.members.length > 0);
+
+  const renderMemberButton = (member: Member) => {
+    const isSelected = selectedMemberIds.includes(member.id);
+    return (
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        key={member.id}
+        type="button"
+        onClick={() => toggleMember(member.id)}
+        className={`
+                py-4 px-2 rounded-lg text-sm font-bold transition-all duration-150 border shadow-md
+                ${
+                  isSelected
+                    ? isAddMode
+                      ? "bg-red-700 text-white border-red-500 shadow-[0_0_10px_rgba(220,38,38,0.5)] transform scale-[0.98]"
+                      : "bg-green-600 text-white border-green-500 shadow-[0_0_10px_rgba(22,163,74,0.5)] transform scale-[0.98]"
+                    : "bg-gray-700/50 text-gray-white border-gray-600 hover:bg-gray-600"
+                }
+            `}
+      >
+        {member.name}
+        {isSelected && " ✓"}
+      </motion.button>
+    );
+  };
+
   return (
     <div className="max-w-3xl mx-auto pb-20">
       <h1 className="text-5xl font-serif font-bold text-center mb-8 text-essex-gold drop-shadow-lg">
@@ -270,35 +308,21 @@ export default function ShotTrackerForm({
             </span>
           </label>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-1">
-            {members
-              .filter((m) => m.group_type !== "Joker")
-              .map((member) => {
-                const isSelected = selectedMemberIds.includes(member.id);
-                return (
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    key={member.id}
-                    type="button"
-                    onClick={() => toggleMember(member.id)}
-                    className={`
-                            py-4 px-2 rounded-lg text-sm font-bold transition-all duration-150 border shadow-md
-                            ${
-                              isSelected
-                                ? isAddMode
-                                  ? "bg-red-700 text-white border-red-500 shadow-[0_0_10px_rgba(220,38,38,0.5)] transform scale-[0.98]"
-                                  : "bg-green-600 text-white border-green-500 shadow-[0_0_10px_rgba(22,163,74,0.5)] transform scale-[0.98]"
-                                : "bg-gray-700/50 text-gray-white border-gray-600 hover:bg-gray-600"
-                            }
-                        `}
-                  >
-                    {member.name}
-                    {isSelected && " ✓"}
-                  </motion.button>
-                );
-              })}
-            {members.filter((m) => m.group_type !== "Joker").length === 0 && (
-              <p className="col-span-full text-center text-gray-500 py-4">
+          <div className="space-y-6">
+            {groupedMembers.map((group) => (
+              <section key={group.type} aria-label={group.label}>
+                <div className={`mb-3 pb-2 border-b-2 text-center ${group.accent}`}>
+                  <h3 className="text-2xl font-serif font-semibold tracking-widest text-gray-200">
+                    {group.label}
+                  </h3>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-1">
+                  {group.members.map(renderMemberButton)}
+                </div>
+              </section>
+            ))}
+            {groupedMembers.length === 0 && (
+              <p className="text-center text-gray-500 py-4">
                 Inga medlemmar hittades
               </p>
             )}
